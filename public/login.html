@@ -440,15 +440,6 @@
         <div class="auth-alert error" id="login-error" style="display: none;"></div>
         <div class="auth-alert success" id="login-success" style="display: none;"></div>
 
-        <!-- Sleek 1-Click Demo Trigger -->
-        <div class="demo-quick-strip">
-          <div class="demo-strip-left">
-            <span class="demo-strip-badge">DEMO</span>
-            <span>Preloaded store & Lagos supplier</span>
-          </div>
-          <button type="button" class="btn-demo-trigger" id="btn-demo-quick">1-Click Login</button>
-        </div>
-
         <!-- Login Form -->
         <form id="split-login-form" class="form-stack">
           
@@ -457,17 +448,17 @@
               <label class="field-label" for="login-email-input">Business Email</label>
             </div>
             <div class="input-control-wrap">
-              <input type="email" id="login-email-input" class="input-control" placeholder="name@business.com" autocomplete="email" required value="kofi.electronics@accra-hub.com">
+              <input type="email" id="login-email-input" class="input-control" placeholder="name@business.com" autocomplete="email" required>
             </div>
           </div>
 
           <div class="form-field-group">
             <div class="field-label-row">
               <label class="field-label" for="login-password-input">Password</label>
-              <a href="#" class="field-forgot-link" onclick="alert('For demo accounts, use password: demo1234 or click 1-Click Login'); return false;">Forgot?</a>
+              <a href="#" class="field-forgot-link" onclick="alert('Password recovery is currently managed through your administrator. Please contact support.'); return false;">Forgot?</a>
             </div>
             <div class="input-control-wrap">
-              <input type="password" id="login-password-input" class="input-control" placeholder="Enter your password" autocomplete="current-password" required value="demo1234">
+              <input type="password" id="login-password-input" class="input-control" placeholder="Enter your password" autocomplete="current-password" required>
               <button type="button" class="btn-toggle-visibility" id="btn-toggle-pw" title="Show / Hide Password">
                 <svg id="eye-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -527,28 +518,7 @@
       errorEl.style.display = 'none';
     }
 
-    // Demo Login
-    document.getElementById('btn-demo-quick')?.addEventListener('click', async () => {
-      const btn = document.getElementById('btn-demo-quick');
-      btn.disabled = true;
-      btn.textContent = 'Logging in...';
-      try {
-        const res = await fetch('/api/auth/demo', { method: 'POST' });
-        const data = await res.json();
-        if (data.success) {
-          localStorage.setItem('settle_agent_token', data.token);
-          showSuccess('Authenticated! Loading dashboard...');
-          setTimeout(() => { window.location.href = '/dashboard'; }, 400);
-        } else {
-          showError(data.error || 'Demo login failed.');
-        }
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '1-Click Login';
-      }
-    });
+
 
     // Form submission
     document.getElementById('split-login-form')?.addEventListener('submit', async (e) => {

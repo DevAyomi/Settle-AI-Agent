@@ -32,36 +32,7 @@ function initLandingInteractions() {
     navActionBtn.href = '/dashboard';
   }
 
-  // Demo Login Buttons
-  const demoButtons = [
-    document.getElementById('btn-hero-demo'),
-    document.getElementById('btn-bottom-demo'),
-    document.getElementById('btn-demo-login')
-  ];
 
-  demoButtons.forEach(btn => {
-    btn?.addEventListener('click', async (e) => {
-      e.preventDefault();
-      btn.disabled = true;
-      btn.textContent = 'Launching Demo...';
-      try {
-        const res = await fetch('/api/auth/demo', { method: 'POST' });
-        const data = await res.json();
-        if (data.success && data.token) {
-          localStorage.setItem('settle_agent_token', data.token);
-          window.location.href = '/dashboard';
-        } else {
-          alert('Demo login failed. Please try again.');
-          btn.disabled = false;
-          btn.textContent = 'Instant Demo';
-        }
-      } catch (err) {
-        alert(`Error connecting to server: ${err.message}`);
-        btn.disabled = false;
-        btn.textContent = 'Instant Demo';
-      }
-    });
-  });
 
   // Hero launch buttons
   document.getElementById('btn-hero-launch')?.addEventListener('click', (e) => {

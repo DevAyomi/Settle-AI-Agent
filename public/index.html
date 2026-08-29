@@ -87,7 +87,7 @@
 
           <div class="hero-btn-row">
             <a href="/register" class="btn-pill-primary" id="btn-hero-launch">Get Started</a>
-            <button class="btn-pill-outline" id="btn-hero-demo">Instant Demo</button>
+            <a href="/login" class="btn-pill-outline">Sign In</a>
           </div>
         </div>
 
@@ -401,7 +401,7 @@
         <p>Join African SMEs automating restock orders and paying suppliers instantly on Solana.</p>
         <div class="cta-btn-group">
           <a href="/register" class="btn-pill-primary" id="btn-bottom-launch">Launch Settle Agent</a>
-          <button class="btn-pill-outline" id="btn-bottom-demo">Test Demo Merchant</button>
+          <a href="/login" class="btn-pill-outline">Sign In</a>
         </div>
       </div>
     </section>
@@ -437,26 +437,15 @@
         <div class="auth-alert error" id="auth-error" style="display: none;"></div>
         <div class="auth-alert success" id="auth-success" style="display: none;"></div>
 
-        <!-- 1-Click Demo Login Banner -->
-        <div class="demo-login-box">
-          <div class="demo-text">
-            <strong>⚡ Quick Evaluation Demo</strong>
-            <span>One-click test access with preloaded inventory & Lagos supplier</span>
-          </div>
-          <button class="btn-demo-action" id="btn-demo-login">Login as Demo Merchant</button>
-        </div>
-
-        <div class="auth-divider"><span>or continue with credentials</span></div>
-
         <!-- Sign In Form -->
         <form id="form-login" class="auth-form">
           <div class="form-group">
             <label for="login-email">Business Email</label>
-            <input type="email" id="login-email" placeholder="merchant@business.com" required value="kofi.electronics@accra-hub.com">
+            <input type="email" id="login-email" placeholder="merchant@business.com" required>
           </div>
           <div class="form-group">
             <label for="login-password">Password</label>
-            <input type="password" id="login-password" placeholder="••••••••" value="demo1234">
+            <input type="password" id="login-password" placeholder="••••••••" required>
           </div>
           <button type="submit" class="btn-primary btn-block" id="btn-submit-login">Sign In to Dashboard</button>
         </form>
