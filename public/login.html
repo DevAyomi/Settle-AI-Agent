@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — Settle Agent | African SME Solana Settlement</title>
+  <meta name="description" content="Sign in to your Settle Agent merchant dashboard to monitor inventory and execute instant cross-border Solana USDC settlements.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/images/settle-logo.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function() {
+      const theme = localStorage.getItem('settle_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* FULL PAGE 50/50 SPLIT-SCREEN */
+    .split-auth-page {
+      min-height: 100vh;
+      width: 100vw;
+      display: grid;
+      grid-template-columns: 1fr 1.05fr;
+      background-color: var(--bg-dark);
+      position: relative;
+    }
+
+    .split-top-bar {
+      position: absolute;
+      top: 28px;
+      right: 36px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-nav-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-nav-home:hover {
+      color: var(--text-main);
+      border-color: var(--border-focus);
+    }
+
+    /* LEFT HERO / BRAND PANEL */
+    .auth-hero-panel {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #181b22 0%, #111317 50%, #090a0c 100%);
+      border-right: 1px solid var(--border-color);
+      padding: 80px 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      color: #ffffff;
+    }
+
+    /* Clean Geometric Orbits */
+    .auth-hero-orbits {
+      position: absolute;
+      bottom: -100px;
+      left: -100px;
+      width: 480px;
+      height: 480px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .auth-hero-orbits::before {
+      content: '';
+      position: absolute;
+      top: 60px;
+      left: 60px;
+      right: 60px;
+      bottom: 60px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+    }
+    .auth-hero-orbits::after {
+      content: '';
+      position: absolute;
+      top: 120px;
+      left: 120px;
+      right: 120px;
+      bottom: 120px;
+      border: 1px solid rgba(212, 247, 56, 0.35);
+      border-radius: 50%;
+      box-shadow: 0 0 35px rgba(212, 247, 56, 0.12);
+    }
+
+    .hero-brand-block {
+      position: relative;
+      z-index: 2;
+      max-width: 460px;
+    }
+
+    .hero-brand-title-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .hero-brand-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      color: #ffffff;
+    }
+
+    .hero-brand-sub {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.65;
+      margin-bottom: 32px;
+    }
+
+    .btn-hero-learn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+      padding: 10px 22px;
+      border-radius: var(--radius-sm);
+      font-size: 0.86rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.2s ease;
+    }
+
+    .btn-hero-learn:hover {
+      background-color: rgba(255, 255, 255, 0.12);
+      border-color: var(--solana-green);
+      color: var(--solana-green);
+    }
+
+    /* RIGHT FORM PANEL - Institutional Fintech Quality */
+    .auth-form-panel {
+      min-height: 100vh;
+      padding: 80px 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: var(--bg-card);
+      position: relative;
+    }
+
+    .form-inner-container {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .form-header-wrap {
+      margin-bottom: 28px;
+    }
+
+    .form-main-heading {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-heading);
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .form-sub-heading {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    /* Sleek Demo Quick-Action Strip */
+    .demo-quick-strip {
+      background-color: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .demo-strip-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .demo-strip-badge {
+      background-color: rgba(212, 247, 56, 0.12);
+      color: var(--solana-green);
+      font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .btn-demo-trigger {
+      background-color: transparent;
+      color: var(--solana-green);
+      border: 1px solid rgba(212, 247, 56, 0.3);
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .btn-demo-trigger:hover {
+      background-color: var(--solana-green);
+      color: #121316;
+    }
+
+    /* Structured Form Fields */
+    .form-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .form-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .field-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .field-forgot-link {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    .field-forgot-link:hover {
+      color: var(--solana-green);
+    }
+
+    .input-control-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-control {
+      width: 100%;
+      background-color: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input-control:focus {
+      border-color: var(--solana-green);
+      background-color: var(--bg-card);
+      box-shadow: 0 0 0 1px var(--solana-green);
+    }
+
+    .input-control::placeholder {
+      color: var(--text-dim);
+    }
+
+    /* Password Toggle Button */
+    .btn-toggle-visibility {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease;
+    }
+
+    .btn-toggle-visibility:hover {
+      color: var(--text-main);
+    }
+
+    /* Confident Fintech Submit Button */
+    .btn-fintech-submit {
+      width: 100%;
+      background-color: var(--btn-pill-bg);
+      color: var(--btn-pill-text);
+      border: none;
+      padding: 13px;
+      border-radius: var(--radius-sm);
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-fintech-submit:hover {
+      background-color: var(--btn-pill-hover);
+    }
+
+    .btn-fintech-submit:active {
+      transform: scale(0.99);
+    }
+
+    .auth-bottom-switch {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .auth-bottom-switch a {
+      color: var(--solana-green);
+      font-weight: 700;
+      text-decoration: none;
+      margin-left: 4px;
+    }
+
+    .auth-bottom-switch a:hover {
+      text-decoration: none;
+      opacity: 0.85;
+    }
+
+    @media (max-width: 900px) {
+      .split-auth-page {
+        grid-template-columns: 1fr;
+      }
+      .auth-hero-panel {
+        min-height: auto;
+        padding: 56px 28px;
+      }
+      .auth-form-panel {
+        min-height: auto;
+        padding: 56px 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Full Page 50/50 Split -->
+  <div class="split-auth-page">
+    
+    <!-- Top Right Actions -->
+    <div class="split-top-bar">
+      <a href="/" class="btn-nav-home">
+        ← Back to Home
+      </a>
+      <button class="btn-theme-toggle" id="btn-split-theme-toggle" title="Toggle Light/Dark Mode" aria-label="Toggle theme">
+        <svg class="sun-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+        <svg class="moon-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Left Hero Brand Panel (Full Height) -->
+    <div class="auth-hero-panel">
+      <div class="auth-hero-orbits"></div>
+      <div class="hero-brand-block">
+        <div class="hero-brand-title-row">
+          <img src="/images/settle-logo.svg" alt="Settle Logo" width="40" height="40">
+          <span class="hero-brand-title">SettleAgent</span>
+        </div>
+        <p class="hero-brand-sub">
+          The autonomous AI assistant for African SMEs that watches inventory and executes instant cross-border Solana USDC settlements.
+        </p>
+        <a href="/#how-it-works" class="btn-hero-learn">Read More</a>
+      </div>
+    </div>
+
+    <!-- Right Form Panel (Institutional Fintech Quality) -->
+    <div class="auth-form-panel">
+      <div class="form-inner-container">
+        
+        <div class="form-header-wrap">
+          <h1 class="form-main-heading">Hello Again!</h1>
+          <p class="form-sub-heading">Welcome back to your merchant portal</p>
+        </div>
+
+        <!-- Alerts -->
+        <div class="auth-alert error" id="login-error" style="display: none;"></div>
+        <div class="auth-alert success" id="login-success" style="display: none;"></div>
+
+        <!-- Sleek 1-Click Demo Trigger -->
+        <div class="demo-quick-strip">
+          <div class="demo-strip-left">
+            <span class="demo-strip-badge">DEMO</span>
+            <span>Preloaded store & Lagos supplier</span>
+          </div>
+          <button type="button" class="btn-demo-trigger" id="btn-demo-quick">1-Click Login</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="split-login-form" class="form-stack">
+          
+          <div class="form-field-group">
+            <div class="field-label-row">
+              <label class="field-label" for="login-email-input">Business Email</label>
+            </div>
+            <div class="input-control-wrap">
+              <input type="email" id="login-email-input" class="input-control" placeholder="name@business.com" autocomplete="email" required value="kofi.electronics@accra-hub.com">
+            </div>
+          </div>
+
+          <div class="form-field-group">
+            <div class="field-label-row">
+              <label class="field-label" for="login-password-input">Password</label>
+              <a href="#" class="field-forgot-link" onclick="alert('For demo accounts, use password: demo1234 or click 1-Click Login'); return false;">Forgot?</a>
+            </div>
+            <div class="input-control-wrap">
+              <input type="password" id="login-password-input" class="input-control" placeholder="Enter your password" autocomplete="current-password" required value="demo1234">
+              <button type="button" class="btn-toggle-visibility" id="btn-toggle-pw" title="Show / Hide Password">
+                <svg id="eye-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-fintech-submit" id="btn-submit-auth">Sign In to Dashboard</button>
+        </form>
+
+        <div class="auth-bottom-switch">
+          Don't have an account? <a href="/register">Create SME Account</a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Theme sync
+    const savedTheme = localStorage.getItem('settle_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    document.getElementById('btn-split-theme-toggle')?.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('settle_theme', next);
+    });
+
+    // Password visibility toggle
+    const pwInput = document.getElementById('login-password-input');
+    const toggleBtn = document.getElementById('btn-toggle-pw');
+    toggleBtn?.addEventListener('click', () => {
+      if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+      } else {
+        pwInput.type = 'password';
+      }
+    });
+
+    const errorEl = document.getElementById('login-error');
+    const successEl = document.getElementById('login-success');
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.style.display = 'block';
+      successEl.style.display = 'none';
+    }
+
+    function showSuccess(msg) {
+      successEl.textContent = msg;
+      successEl.style.display = 'block';
+      errorEl.style.display = 'none';
+    }
+
+    // Demo Login
+    document.getElementById('btn-demo-quick')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btn-demo-quick');
+      btn.disabled = true;
+      btn.textContent = 'Logging in...';
+      try {
+        const res = await fetch('/api/auth/demo', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem('settle_agent_token', data.token);
+          showSuccess('Authenticated! Loading dashboard...');
+          setTimeout(() => { window.location.href = '/dashboard'; }, 400);
+        } else {
+          showError(data.error || 'Demo login failed.');
+        }
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '1-Click Login';
+      }
+    });
+
+    // Form submission
+    document.getElementById('split-login-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email-input').value;
+      const password = document.getElementById('login-password-input').value;
+      const btn = document.getElementById('btn-submit-auth');
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          localStorage.setItem('settle_agent_token', data.token);
+          showSuccess('Authenticated! Loading dashboard...');
+          setTimeout(() => { window.location.href = '/dashboard'; }, 400);
+        } else {
+          showError(data.error || 'Invalid email or password.');
+        }
+      } catch (err) {
+        showError(`Network error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In to Dashboard';
+      }
+    });
+  </script>
+</body>
+</html>

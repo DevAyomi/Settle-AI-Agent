@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="settle-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#D4F738" />
+    </linearGradient>
+    <filter id="settle-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#D4F738" flood-opacity="0.3" />
+    </filter>
+  </defs>
+  
+  <rect x="4" y="4" width="92" height="92" rx="24" fill="#14171E" stroke="#2B2F3A" stroke-width="2"/>
+  
+  <path d="M56 18L30 52H48L42 82L68 46H50L56 18Z" 
+        fill="url(#settle-grad)" 
+        filter="url(#settle-glow)" 
+        stroke="#ffffff" 
+        stroke-width="1.5" 
+        stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settle Agent — Instant Solana Cross-Border Settlement</title>
+  <meta name="description" content="Autonomous inventory replenishment and instant Solana USDC cross-border settlement for African SMEs with 1-tap merchant approvals.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Playfair+Display:ital,wght@1,500;1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/images/settle-logo.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function() {
+      const theme = localStorage.getItem('settle_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- LANDING PAGE VIEW -->
+  <div id="landing-view" class="view-section">
+    
+    <!-- Top Navigation Bar -->
+    <header class="landing-header">
+      <div class="nav-wrapper">
+        <!-- Logo -->
+        <a href="#" class="brand-logo">
+          <img src="/images/settle-logo.svg" alt="Settle Logo" class="brand-logo-img">
+          <span class="logo-text">SETTLE<span class="logo-bold">AGENT</span></span>
+        </a>
+
+        <!-- Centered Floating Nav Pill -->
+        <nav class="nav-pill-menu">
+          <a href="#home" class="nav-item active">Home</a>
+          <a href="#features" class="nav-item">Features</a>
+          <a href="#calculator" class="nav-item">Pricing & Savings</a>
+          <a href="#corridors" class="nav-item">Corridors</a>
+          <a href="#how-it-works" class="nav-item">How It Works</a>
+        </nav>
+
+        <!-- Right Actions -->
+        <div class="nav-right-actions">
+          <button class="btn-theme-toggle" id="btn-theme-toggle" title="Toggle Light/Dark Mode" aria-label="Toggle theme">
+            <svg class="sun-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <svg class="moon-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+          </button>
+          <a href="/login" class="btn-pill-login" id="btn-open-login">Sign In</a>
+          <a href="/register" class="btn-pill-signup" id="btn-open-register">Sign Up</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="home">
+      <div class="hero-container">
+        
+        <!-- Left Hero Content -->
+        <div class="hero-left">
+          
+          <!-- Launch Corridor Announcement Badge -->
+          <div class="launch-notice-pill">
+            <span class="live-pulse-dot"></span>
+            <span class="launch-text"><strong>Live at Launch:</strong> Solana USDC ➔ Nigeria (NGN)</span>
+            <span class="launch-coming-soon">Other African Currencies Coming Soon</span>
+          </div>
+
+          <h1 class="hero-main-title">
+            Never Run Out of Stock<br>
+            Instant Restocking with<br>
+            <span class="script-accent">Solana USDC</span>
+          </h1>
+          
+          <div class="hand-arrow-wrap">
+            <svg class="hand-drawn-arrow" width="44" height="44" viewBox="0 0 100 100" fill="none">
+              <path d="M20 30 Q 50 20, 70 60 Q 60 75, 45 70 M 70 60 L 55 50 M 70 60 L 75 45" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p class="hero-description-text">
+              Powering African SMEs with autonomous inventory stock-watching and instant 2.4s cross-border supplier settlements to <strong>Nigeria (NGN)</strong> at launch, with Ghana (GHS), Kenya (KES), and pan-African currencies coming soon.
+            </p>
+          </div>
+
+          <div class="hero-btn-row">
+            <a href="/register" class="btn-pill-primary" id="btn-hero-launch">Get Started</a>
+            <button class="btn-pill-outline" id="btn-hero-demo">Instant Demo</button>
+          </div>
+        </div>
+
+        <!-- Right Hero 3D Graphic -->
+        <div class="hero-right">
+          <div class="hero-art-wrapper">
+            <div class="art-glow-ring"></div>
+            <img src="/images/hero-hand-cards.jpg" alt="3D Hand holding Solana and USDC cards (Dark Mode)" class="hero-3d-img hero-img-dark">
+            <img src="/images/hero-hand-cards-light.jpg" alt="3D Hand holding Solana and USDC cards (Light Mode)" class="hero-3d-img hero-img-light">
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Floating Guarantee / Corridor Bar -->
+    <div class="guarantee-strip-container reveal-on-scroll reveal-slide-up">
+      <div class="guarantee-pill-card">
+        <div class="gp-left">
+          <span class="gp-title">100% On-Chain Solana Settlement Guarantee</span>
+          <a href="#how-it-works" class="gp-link">LEARN MORE ➔</a>
+        </div>
+        <div class="gp-right">
+          <div class="corridor-tags-cluster">
+            <span class="c-tag">USDC SPL <span class="c-dot green">✦</span></span>
+            <span class="c-tag">Nigeria NGN <span class="c-dot yellow" style="background-color: #22c55e;">● LIVE</span></span>
+            <span class="c-tag">Access Bank Rail <span class="c-dot green">✦</span></span>
+            <span class="c-tag" style="opacity: 0.75;">GHS & KES <span style="font-size: 0.7rem; color: #f59e0b; margin-left: 4px;">SOON</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Section: "Secure & Instant" -->
+    <section class="section-block" id="features">
+      <div class="section-title-wrap reveal-on-scroll reveal-slide-up">
+        <h2 class="script-heading">Secure & Instant</h2>
+        <p class="section-subtitle">Guiding African merchants on their autonomous cross-border settlement journey starting with Nigerian suppliers.</p>
+      </div>
+
+      <div class="features-triple-grid">
+        <div class="feature-dark-card reveal-on-scroll reveal-slide-up reveal-delay-1">
+          <div class="f-icon-box">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <h3>Autonomous Stock Watch</h3>
+          <p>The AI agent watches merchant stock counts around the clock, drafting restocking orders the instant inventory breaches safe threshold levels.</p>
+        </div>
+
+        <div class="feature-dark-card reveal-on-scroll reveal-slide-up reveal-delay-2">
+          <div class="f-icon-box">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h3>Sub-3s Settlement</h3>
+          <p>Settles suppliers in seconds via Solana USDC with direct conversion to local Nigerian Naira bank rails at launch, saving 7–8% in bank fees.</p>
+        </div>
+
+        <div class="feature-dark-card reveal-on-scroll reveal-slide-up reveal-delay-3">
+          <div class="f-icon-box">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <h3>1-Tap Merchant Consent</h3>
+          <p>Zero autonomous spending without your permission. Receive interactive approval requests on your Dashboard or Telegram with one tap.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Executive Economic Audit & Corridor Calculator -->
+    <section class="section-block" id="calculator">
+      <div class="section-title-wrap reveal-on-scroll reveal-slide-up">
+        <h2 class="script-heading">Economic Advantage</h2>
+        <p class="section-subtitle">A transparent, line-by-line financial audit comparing correspondent SWIFT banking with Solana USDC rails.</p>
+      </div>
+
+      <div class="financial-audit-card reveal-on-scroll reveal-scale">
+        
+        <!-- Controls: Business Profile Presets & Corridor Selector -->
+        <div class="audit-controls-header">
+          <div class="corridor-select-group">
+            <span class="control-label">Restock Trade Corridor:</span>
+            <div class="corridor-pill-selector">
+              <button class="corridor-pill-btn active" data-corridor="ngn">
+                <span>🇳🇬 Nigeria (NGN) • Live at Launch</span>
+              </button>
+              <button class="corridor-pill-btn" data-corridor="ghs" title="Coming Soon in Phase 2">
+                <span>🇬🇭 Ghana (GHS) • Coming Soon</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="preset-group">
+            <span class="control-label">SME Business Scale:</span>
+            <div class="preset-chips">
+              <button class="preset-chip" data-val="5000">Retail ($5k/mo)</button>
+              <button class="preset-chip active" data-val="15000">Wholesale ($15k/mo)</button>
+              <button class="preset-chip" data-val="35000">Distributor ($35k/mo)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Volume Slider & Input Row -->
+        <div class="volume-slider-bar">
+          <div class="vs-left">
+            <span class="vs-title">Monthly Restocking Settlement Volume</span>
+            <span class="vs-sub">Approx. 3–4 cross-border supplier restocking batches per month</span>
+          </div>
+          <div class="vs-right">
+            <div class="vs-amount-badge">
+              <span class="vs-currency">USD</span>
+              <input type="number" id="calc-volume-number" value="15000" min="1000" max="100000" step="500">
+            </div>
+          </div>
+        </div>
+        <div class="slider-track-wrap">
+          <input type="range" id="calc-volume-slider" min="1000" max="50000" step="500" value="15000">
+          <div class="slider-markers">
+            <span>$1,000</span>
+            <span>$15,000</span>
+            <span>$30,000</span>
+            <span>$50,000+</span>
+          </div>
+        </div>
+
+        <!-- Line-by-Line Fee Breakdown Table -->
+        <div class="audit-table-wrapper">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th style="width: 32%;">Fee & Settlement Friction Item</th>
+                <th style="width: 28%;" class="th-bank">Traditional Correspondent Wire</th>
+                <th style="width: 28%;" class="th-agent">Settle Agent (Solana Rail)</th>
+                <th style="width: 12%;" class="th-delta">Savings</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="item-title">Hidden Bank FX Spread Markup</div>
+                  <div class="item-sub">Intermediary FX conversion spread vs interbank midpoint</div>
+                </td>
+                <td class="td-bank">
+                  <span class="fee-val" id="audit-bank-spread">$600.00</span>
+                  <span class="fee-rate">~4.0% bank markup</span>
+                </td>
+                <td class="td-agent">
+                  <span class="fee-val positive" id="audit-agent-spread">$22.50</span>
+                  <span class="fee-rate">0.15% oracle liquidity spread</span>
+                </td>
+                <td class="td-delta">
+                  <span class="badge-saving" id="delta-spread">-96.2%</span>
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  <div class="item-title">SWIFT Messaging & Intermediary Lifting Fees</div>
+                  <div class="item-sub">Fixed outgoing & correspondent bank routing deductions</div>
+                </td>
+                <td class="td-bank">
+                  <span class="fee-val" id="audit-bank-lifting">$160.00</span>
+                  <span class="fee-rate">~$40 per wire × 4 batches</span>
+                </td>
+                <td class="td-agent">
+                  <span class="fee-val positive">$0.00</span>
+                  <span class="fee-rate">&lt; $0.0005 Solana gas</span>
+                </td>
+                <td class="td-delta">
+                  <span class="badge-saving">-100%</span>
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  <div class="item-title">Working Capital In-Transit Delay</div>
+                  <div class="item-sub">Days your funds are locked offshore before supplier credits</div>
+                </td>
+                <td class="td-bank">
+                  <span class="fee-val">4 – 7 Business Days</span>
+                  <span class="fee-rate">Capital frozen in offshore transit</span>
+                </td>
+                <td class="td-agent">
+                  <span class="fee-val positive">&lt; 3.0 Seconds</span>
+                  <span class="fee-rate">Real-time instant finality</span>
+                </td>
+                <td class="td-delta">
+                  <span class="badge-saving">Instant</span>
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  <div class="item-title">Inventory Restocking Velocity</div>
+                  <div class="item-sub">Stockout vulnerability & manual reorder admin</div>
+                </td>
+                <td class="td-bank">
+                  <span class="fee-val">Manual Notebook / Memory</span>
+                  <span class="fee-rate">Risk of out-of-stock lost revenue</span>
+                </td>
+                <td class="td-agent">
+                  <span class="fee-val positive">Autonomous AI Watch</span>
+                  <span class="fee-rate">1-Tap approval request on threshold breach</span>
+                </td>
+                <td class="td-delta">
+                  <span class="badge-saving">Automated</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Executive Financial Summary Banner -->
+        <div class="audit-summary-banner">
+          <div class="summary-stat-col">
+            <span class="sum-label">Net Monthly Capital Reclaimed:</span>
+            <div class="sum-amount-row">
+              <span class="sum-amount" id="sum-monthly-reclaimed">$737.50</span>
+              <span class="sum-unit">/ month</span>
+            </div>
+            <span class="sum-sub">Reinvested back into SME inventory</span>
+          </div>
+
+          <div class="summary-divider-v"></div>
+
+          <div class="summary-stat-col">
+            <span class="sum-label">Annual Projected Net Savings:</span>
+            <div class="sum-amount-row">
+              <span class="sum-amount highlight" id="sum-annual-reclaimed">$8,850.00 USD</span>
+            </div>
+            <span class="sum-sub">Plus ~60 business days of liquidity lag eliminated</span>
+          </div>
+
+          <div class="summary-cta-col">
+            <a href="/register" class="btn-pill-primary" id="btn-audit-cta">Start Free Evaluation</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Corridors Section -->
+    <section class="section-block" id="corridors">
+      <div class="section-title-wrap reveal-on-scroll reveal-slide-up">
+        <h2 class="script-heading">African Corridors</h2>
+        <p class="section-sub">Live for Nigerian suppliers at launch. Pan-African corridors rolling out soon.</p>
+      </div>
+
+      <div class="corridors-triple-grid">
+        <!-- Live Launch Corridor -->
+        <div class="corridor-dark-card active reveal-on-scroll reveal-slide-up reveal-delay-1" style="border-color: rgba(34, 197, 94, 0.4);">
+          <div class="c-card-top">
+            <span class="c-flag">🇳🇬</span>
+            <div>
+              <h4>Nigeria (NGN Corridor)</h4>
+              <span class="c-sub">Access Bank / NIBSS Instant Interbank</span>
+            </div>
+            <span class="c-badge live" style="background-color: #22c55e; color: #ffffff;">● LIVE AT LAUNCH</span>
+          </div>
+          <div class="c-rate-box">
+            <span>Oracle Rate:</span>
+            <strong id="landing-ngn-rate">1 USDC = ₦1,520.00 NGN</strong>
+          </div>
+          <p class="c-info">Active primary settlement rail for Lagos electronics, phones, and wholesale tech distributors.</p>
+        </div>
+
+        <!-- Expansion Corridor: Ghana -->
+        <div class="corridor-dark-card reveal-on-scroll reveal-slide-up reveal-delay-2" style="opacity: 0.85;">
+          <div class="c-card-top">
+            <span class="c-flag">🇬🇭</span>
+            <div>
+              <h4>Ghana (GHS Corridor)</h4>
+              <span class="c-sub">GhIPSS / Mobile Money (MTN, Telecel)</span>
+            </div>
+            <span class="c-badge upcoming" style="background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">COMING SOON</span>
+          </div>
+          <div class="c-rate-box">
+            <span>Projected Rate:</span>
+            <strong>1 USDC ≈ GH₵15.80 GHS</strong>
+          </div>
+          <p class="c-info">Expansion corridor for Accra central electronics and retail hardware importers.</p>
+        </div>
+
+        <!-- Expansion Corridor: Kenya -->
+        <div class="corridor-dark-card reveal-on-scroll reveal-slide-up reveal-delay-3" style="opacity: 0.85;">
+          <div class="c-card-top">
+            <span class="c-flag">🇰🇪</span>
+            <div>
+              <h4>Kenya (KES Corridor)</h4>
+              <span class="c-sub">Safaricom M-Pesa / Pesalink</span>
+            </div>
+            <span class="c-badge upcoming" style="background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">COMING SOON</span>
+          </div>
+          <div class="c-rate-box">
+            <span>Projected Rate:</span>
+            <strong>1 USDC ≈ KSh 132.50 KES</strong>
+          </div>
+          <p class="c-info">Nairobi cross-border tech hardware, mobile accessories, and apparel supplier corridor.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Action Banner -->
+    <section class="bottom-cta-wrap">
+      <div class="cta-dark-card reveal-on-scroll reveal-scale">
+        <h2 class="script-heading">Ready to Accelerate Your Supply Chain?</h2>
+        <p>Join African SMEs automating restock orders and paying suppliers instantly on Solana.</p>
+        <div class="cta-btn-group">
+          <a href="/register" class="btn-pill-primary" id="btn-bottom-launch">Launch Settle Agent</a>
+          <button class="btn-pill-outline" id="btn-bottom-demo">Test Demo Merchant</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer-dark">
+      <div class="footer-inner">
+        <div class="brand-logo">
+          <img src="/images/settle-logo.svg" alt="Settle Logo" class="brand-logo-img">
+          <span class="logo-text">SETTLE<span class="logo-bold">AGENT</span></span>
+        </div>
+        <p class="footer-note">Built on Fastify, PostgreSQL, BullMQ, and Solana Web3 for African SMEs.</p>
+        <div class="footer-links-row">
+          <a href="https://explorer.solana.com/?cluster=devnet" target="_blank">Solana Explorer</a>
+          <a href="/api/health" target="_blank">System API</a>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+
+  <!-- AUTHENTICATION MODAL -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal-card auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login">Sign In</button>
+        <button class="auth-tab" id="tab-register">Create SME Account</button>
+      </div>
+
+      <div class="auth-body">
+        <!-- Error Alert -->
+        <div class="auth-alert error" id="auth-error" style="display: none;"></div>
+        <div class="auth-alert success" id="auth-success" style="display: none;"></div>
+
+        <!-- 1-Click Demo Login Banner -->
+        <div class="demo-login-box">
+          <div class="demo-text">
+            <strong>⚡ Quick Evaluation Demo</strong>
+            <span>One-click test access with preloaded inventory & Lagos supplier</span>
+          </div>
+          <button class="btn-demo-action" id="btn-demo-login">Login as Demo Merchant</button>
+        </div>
+
+        <div class="auth-divider"><span>or continue with credentials</span></div>
+
+        <!-- Sign In Form -->
+        <form id="form-login" class="auth-form">
+          <div class="form-group">
+            <label for="login-email">Business Email</label>
+            <input type="email" id="login-email" placeholder="merchant@business.com" required value="kofi.electronics@accra-hub.com">
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="••••••••" value="demo1234">
+          </div>
+          <button type="submit" class="btn-primary btn-block" id="btn-submit-login">Sign In to Dashboard</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="form-register" class="auth-form" style="display: none;">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reg-bname">Business Name</label>
+              <input type="text" id="reg-bname" placeholder="Accra Mega Store" required>
+            </div>
+            <div class="form-group">
+              <label for="reg-name">Contact Person</label>
+              <input type="text" id="reg-name" placeholder="Kofi Mensah" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Business Email</label>
+            <input type="email" id="reg-email" placeholder="kofi@accramega.com" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reg-country">Country</label>
+              <select id="reg-country">
+                <option value="Ghana">Ghana 🇬🇭</option>
+                <option value="Nigeria">Nigeria 🇳🇬</option>
+                <option value="Kenya">Kenya 🇰🇪</option>
+                <option value="Rwanda">Rwanda 🇷🇼</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="reg-phone">Phone / WhatsApp</label>
+              <input type="text" id="reg-phone" placeholder="+233 24 123 4567">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Create Password</label>
+            <input type="password" id="reg-password" placeholder="Minimum 6 characters" required>
+          </div>
+          <button type="submit" class="btn-primary btn-block" id="btn-submit-register">Create Account & Generate Solana Wallet</button>
+        </form>
+      </div>
+
+      <div class="auth-footer">
+        <button class="btn-close-auth" id="btn-close-auth">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

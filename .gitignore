@@ -1,0 +1,21 @@
+# Dependency directories
+node_modules/
+
+# Compiled files
+dist/
+
+# Local configuration / Environment files
+.env
+.env.local
+.env.*.local
+
+# Databases and private keys
+data/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# OS files
+.DS_Store
+Thumbs.db

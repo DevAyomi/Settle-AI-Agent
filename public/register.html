@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create SME Account — Settle Agent | Solana Settlement</title>
+  <meta name="description" content="Create a new merchant account on Settle Agent. Connect your inventory and automate supplier cross-border Solana USDC settlements.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/images/settle-logo.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    (function() {
+      const theme = localStorage.getItem('settle_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* FULL PAGE 50/50 SPLIT-SCREEN */
+    .split-auth-page {
+      min-height: 100vh;
+      width: 100vw;
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      background-color: var(--bg-dark);
+      position: relative;
+    }
+
+    .split-top-bar {
+      position: absolute;
+      top: 28px;
+      right: 36px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-nav-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-nav-home:hover {
+      color: var(--text-main);
+      border-color: var(--border-focus);
+    }
+
+    /* LEFT HERO / BRAND PANEL */
+    .auth-hero-panel {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #181b22 0%, #111317 50%, #090a0c 100%);
+      border-right: 1px solid var(--border-color);
+      padding: 80px 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      color: #ffffff;
+    }
+
+    .auth-hero-orbits {
+      position: absolute;
+      bottom: -100px;
+      left: -100px;
+      width: 480px;
+      height: 480px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .auth-hero-orbits::before {
+      content: '';
+      position: absolute;
+      top: 60px;
+      left: 60px;
+      right: 60px;
+      bottom: 60px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+    }
+    .auth-hero-orbits::after {
+      content: '';
+      position: absolute;
+      top: 120px;
+      left: 120px;
+      right: 120px;
+      bottom: 120px;
+      border: 1px solid rgba(212, 247, 56, 0.35);
+      border-radius: 50%;
+      box-shadow: 0 0 35px rgba(212, 247, 56, 0.12);
+    }
+
+    .hero-brand-block {
+      position: relative;
+      z-index: 2;
+      max-width: 460px;
+    }
+
+    .hero-brand-title-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .hero-brand-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      color: #ffffff;
+    }
+
+    .hero-brand-sub {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.65;
+      margin-bottom: 32px;
+    }
+
+    .btn-hero-learn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+      padding: 10px 22px;
+      border-radius: var(--radius-sm);
+      font-size: 0.86rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.2s ease;
+    }
+
+    .btn-hero-learn:hover {
+      background-color: rgba(255, 255, 255, 0.12);
+      border-color: var(--solana-green);
+      color: var(--solana-green);
+    }
+
+    /* RIGHT FORM PANEL - Institutional Fintech Quality */
+    .auth-form-panel {
+      min-height: 100vh;
+      padding: 60px 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: var(--bg-card);
+      position: relative;
+    }
+
+    .form-inner-container {
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .form-header-wrap {
+      margin-bottom: 24px;
+    }
+
+    .form-main-heading {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-heading);
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+
+    .form-sub-heading {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    /* Structured Form Fields */
+    .form-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .input-control-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-control {
+      width: 100%;
+      background-color: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input-control:focus {
+      border-color: var(--solana-green);
+      background-color: var(--bg-card);
+      box-shadow: 0 0 0 1px var(--solana-green);
+    }
+
+    .input-control::placeholder {
+      color: var(--text-dim);
+    }
+
+    select.input-control {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239ba1ad' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    /* Password Toggle Button */
+    .btn-toggle-visibility {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s ease;
+    }
+
+    .btn-toggle-visibility:hover {
+      color: var(--text-main);
+    }
+
+    /* Confident Fintech Submit Button */
+    .btn-fintech-submit {
+      width: 100%;
+      background-color: var(--btn-pill-bg);
+      color: var(--btn-pill-text);
+      border: none;
+      padding: 13px;
+      border-radius: var(--radius-sm);
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-fintech-submit:hover {
+      background-color: var(--btn-pill-hover);
+    }
+
+    .btn-fintech-submit:active {
+      transform: scale(0.99);
+    }
+
+    .auth-bottom-switch {
+      text-align: center;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .auth-bottom-switch a {
+      color: var(--solana-green);
+      font-weight: 700;
+      text-decoration: none;
+      margin-left: 4px;
+    }
+
+    .auth-bottom-switch a:hover {
+      text-decoration: none;
+      opacity: 0.85;
+    }
+
+    @media (max-width: 900px) {
+      .split-auth-page {
+        grid-template-columns: 1fr;
+      }
+      .form-row-2 {
+        grid-template-columns: 1fr;
+      }
+      .auth-hero-panel {
+        min-height: auto;
+        padding: 56px 28px;
+      }
+      .auth-form-panel {
+        min-height: auto;
+        padding: 56px 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Full Page 50/50 Split -->
+  <div class="split-auth-page">
+    
+    <!-- Top Right Actions -->
+    <div class="split-top-bar">
+      <a href="/" class="btn-nav-home">
+        ← Back to Home
+      </a>
+      <button class="btn-theme-toggle" id="btn-split-theme-toggle" title="Toggle Light/Dark Mode" aria-label="Toggle theme">
+        <svg class="sun-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+        <svg class="moon-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Left Hero Brand Panel (Full Height) -->
+    <div class="auth-hero-panel">
+      <div class="auth-hero-orbits"></div>
+      <div class="hero-brand-block">
+        <div class="hero-brand-title-row">
+          <img src="/images/settle-logo.svg" alt="Settle Logo" width="40" height="40">
+          <span class="hero-brand-title">SettleAgent</span>
+        </div>
+        <p class="hero-brand-sub">
+          The autonomous AI assistant for African SMEs that watches inventory and executes instant cross-border Solana USDC settlements.
+        </p>
+        <a href="/#how-it-works" class="btn-hero-learn">Read More</a>
+      </div>
+    </div>
+
+    <!-- Right Form Panel (Institutional Fintech Quality) -->
+    <div class="auth-form-panel">
+      <div class="form-inner-container">
+        
+        <div class="form-header-wrap" id="reg-header-wrap">
+          <h1 class="form-main-heading">Create Merchant Account</h1>
+          <p class="form-sub-heading">Automate your inventory restocking and instant cross-border supplier settlements</p>
+        </div>
+
+        <!-- Alerts -->
+        <div class="auth-alert error" id="reg-error" style="display: none;"></div>
+        <div class="auth-alert success" id="reg-success" style="display: none;"></div>
+
+        <!-- Registration Form -->
+        <form id="split-reg-form" class="form-stack">
+          <div class="form-row-2">
+            <div class="form-field-group">
+              <label class="field-label" for="reg-bname-input">Business / Store Name</label>
+              <div class="input-control-wrap">
+                <input type="text" id="reg-bname-input" class="input-control" placeholder="e.g. Accra Prime Electronics" required>
+              </div>
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label" for="reg-name-input">Contact Person</label>
+              <div class="input-control-wrap">
+                <input type="text" id="reg-name-input" class="input-control" placeholder="e.g. Kwame Mensah" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field-group">
+            <label class="field-label" for="reg-email-input">Business Email</label>
+            <div class="input-control-wrap">
+              <input type="email" id="reg-email-input" class="input-control" placeholder="merchant@business.com" autocomplete="email" required>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-field-group">
+              <label class="field-label" for="reg-country-input">Base Country / Currency</label>
+              <div class="input-control-wrap">
+                <select id="reg-country-input" class="input-control">
+                  <option value="Ghana" selected>Ghana 🇬🇭 (USD / GHS)</option>
+                  <option value="Nigeria">Nigeria 🇳🇬 (USD / NGN)</option>
+                  <option value="Kenya">Kenya 🇰🇪 (USD / KES)</option>
+                  <option value="Rwanda">Rwanda 🇷🇼 (USD / RWF)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-field-group">
+              <label class="field-label" for="reg-phone-input">Phone / WhatsApp</label>
+              <div class="input-control-wrap">
+                <input type="text" id="reg-phone-input" class="input-control" placeholder="+233 24 123 4567" autocomplete="tel">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field-group">
+            <label class="field-label" for="reg-password-input">Password</label>
+            <div class="input-control-wrap">
+              <input type="password" id="reg-password-input" class="input-control" placeholder="Minimum 6 characters" autocomplete="new-password" required>
+              <button type="button" class="btn-toggle-visibility" id="btn-toggle-reg-pw" title="Show / Hide Password">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-fintech-submit" id="btn-submit-reg">Create SME Merchant Account</button>
+        </form>
+
+        <!-- Wallet Onboarding View (Hidden by default) -->
+        <div id="wallet-onboarding-view" class="form-stack" style="display: none;">
+          <div class="form-header-wrap" style="text-align: center; margin-bottom: 20px;">
+            <div style="font-size: 2.8rem; margin-bottom: 8px;">🎉</div>
+            <h1 class="form-main-heading" style="font-size: 1.5rem;">Account & Wallet Ready!</h1>
+            <p class="form-sub-heading" style="margin-top: 6px;">A dedicated non-custodial Solana wallet has been generated for your business.</p>
+          </div>
+
+          <!-- Wallet Card -->
+          <div style="background-color: var(--bg-card-inner); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px;">Generated Wallet Address</span>
+              <span style="font-size: 0.65rem; background-color: rgba(20, 241, 149, 0.1); color: var(--solana-green); padding: 2px 6px; border-radius: 4px; font-weight: 700; border: 1px solid rgba(20, 241, 149, 0.2);">SOLANA DEVNET</span>
+            </div>
+            
+            <div style="display: flex; gap: 8px; align-items: center; background-color: var(--bg-card); border: 1px solid var(--border-color); padding: 10px 12px; border-radius: var(--radius-sm); position: relative;">
+              <code id="merchant-wallet-pubkey" style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-main); word-break: break-all; width: 100%; padding-right: 28px; line-height: 1.4;">-</code>
+              <button type="button" id="btn-copy-pubkey" title="Copy Wallet Address" style="position: absolute; right: 8px; background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center; transition: color 0.15s ease;">
+                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                </svg>
+              </button>
+            </div>
+            <span id="copy-feedback" style="display: none; font-size: 0.7rem; color: var(--solana-green); font-weight: 600; text-align: right; margin-top: -6px; margin-bottom: -4px;">Address copied to clipboard!</span>
+          </div>
+
+          <!-- Airdrop Faucet Section -->
+          <div style="background-color: rgba(20, 241, 149, 0.04); border: 1px dashed rgba(20, 241, 149, 0.25); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px;">
+            <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; margin-top: 0;">
+              Before starting restocking simulations, request a free airdrop of <strong>1 Devnet SOL</strong> to cover transaction gas fees.
+            </p>
+            <button type="button" class="btn-fintech-submit" id="btn-airdrop-faucet" style="background-color: rgba(20, 241, 149, 0.1); border: 1px solid rgba(20, 241, 149, 0.3); color: var(--solana-green); margin-top: 0; padding: 10px; font-size: 0.86rem;">
+              <span>⚡ Request 1 SOL Faucet Airdrop</span>
+            </button>
+            <div id="airdrop-status" style="display: none; font-size: 0.76rem; margin-top: 8px; font-weight: 600; text-align: center; line-height: 1.4;"></div>
+          </div>
+
+          <!-- Proceed Button -->
+          <button type="button" class="btn-fintech-submit" id="btn-proceed-dashboard" style="background-color: var(--btn-pill-bg); color: var(--btn-pill-text); padding: 12px; font-size: 0.92rem; margin-top: 0;">
+            <span>Proceed to Dashboard ➔</span>
+          </button>
+        </div>
+
+        <div class="auth-bottom-switch" id="reg-bottom-switch">
+          Already registered? <a href="/login">Sign In</a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Theme sync
+    const savedTheme = localStorage.getItem('settle_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    document.getElementById('btn-split-theme-toggle')?.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('settle_theme', next);
+    });
+
+    // Password visibility toggle
+    const pwInput = document.getElementById('reg-password-input');
+    const toggleBtn = document.getElementById('btn-toggle-reg-pw');
+    toggleBtn?.addEventListener('click', () => {
+      if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+      } else {
+        pwInput.type = 'password';
+      }
+    });
+
+    const errorEl = document.getElementById('reg-error');
+    const successEl = document.getElementById('reg-success');
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.style.display = 'block';
+      successEl.style.display = 'none';
+    }
+
+    function showSuccess(msg) {
+      errorEl.style.display = 'none';
+      successEl.textContent = msg;
+      successEl.style.display = 'block';
+    }
+
+    document.getElementById('split-reg-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const businessName = document.getElementById('reg-bname-input').value;
+      const name = document.getElementById('reg-name-input').value;
+      const email = document.getElementById('reg-email-input').value;
+      const country = document.getElementById('reg-country-input').value;
+      const phone = document.getElementById('reg-phone-input').value;
+      const password = document.getElementById('reg-password-input').value;
+      const btn = document.getElementById('btn-submit-reg');
+
+      btn.disabled = true;
+      btn.textContent = 'Creating Merchant Account...';
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            businessName,
+            name,
+            email,
+            country,
+            phone,
+            password
+          })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          localStorage.setItem('settle_agent_token', data.token);
+          
+          // Show Wallet Onboarding
+          const pubkey = data.solanaPublicKey || (data.merchant && data.merchant.solana_public_key) || '-';
+          document.getElementById('merchant-wallet-pubkey').textContent = pubkey;
+
+          document.getElementById('reg-header-wrap').style.display = 'none';
+          document.getElementById('split-reg-form').style.display = 'none';
+          document.getElementById('reg-bottom-switch').style.display = 'none';
+          errorEl.style.display = 'none';
+          successEl.style.display = 'none';
+
+          document.getElementById('wallet-onboarding-view').style.display = 'flex';
+
+          document.getElementById('btn-copy-pubkey').addEventListener('click', () => {
+            navigator.clipboard.writeText(pubkey).then(() => {
+              const feedback = document.getElementById('copy-feedback');
+              feedback.style.display = 'block';
+              setTimeout(() => { feedback.style.display = 'none'; }, 2000);
+            });
+          });
+
+          const airdropBtn = document.getElementById('btn-airdrop-faucet');
+          const airdropStatus = document.getElementById('airdrop-status');
+          airdropBtn.addEventListener('click', async () => {
+            airdropBtn.disabled = true;
+            airdropBtn.textContent = 'Requesting Faucet Airdrop...';
+            airdropStatus.style.display = 'block';
+            airdropStatus.style.color = 'var(--text-muted)';
+            airdropStatus.textContent = '⏱ Sending airdrop request on Solana Devnet...';
+
+            try {
+              const airRes = await fetch('/api/wallet/airdrop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ publicKey: pubkey })
+              });
+              const airData = await airRes.json();
+              if (airData.success) {
+                airdropStatus.style.color = 'var(--solana-green)';
+                airdropStatus.innerHTML = `✅ Confirmed! Airdropped 1 SOL.<br><small style="font-family: var(--font-mono); font-size: 0.68rem; word-break: break-all;">Sig: ${airData.signature.substring(0, 24)}...</small>`;
+                airdropBtn.textContent = 'Airdrop Successful';
+              } else {
+                airdropStatus.style.color = '#ef4444';
+                airdropStatus.textContent = `❌ Airdrop failed: ${airData.error || 'Unknown error'}`;
+                airdropBtn.disabled = false;
+                airdropBtn.textContent = '⚡ Request 1 SOL Faucet Airdrop';
+              }
+            } catch (err) {
+              airdropStatus.style.color = '#ef4444';
+              airdropStatus.textContent = `❌ Network error: ${err.message}`;
+              airdropBtn.disabled = false;
+              airdropBtn.textContent = '⚡ Request 1 SOL Faucet Airdrop';
+            }
+          });
+
+          document.getElementById('btn-proceed-dashboard').addEventListener('click', () => {
+            window.location.href = '/dashboard';
+          });
+        } else {
+          showError(data.error || 'Registration failed.');
+        }
+      } catch (err) {
+        showError(`Network error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create SME Merchant Account';
+      }
+    });
+  </script>
+</body>
+</html>

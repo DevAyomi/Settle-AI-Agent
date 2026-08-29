@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchant Dashboard — Settle Agent | Solana USDC Settlement</title>
+  <meta name="description" content="Settle Agent Merchant Dashboard. Monitor stock levels, simulate customer sales, view live USDC/NGN Oracle rates, and execute instant Solana on-chain supplier settlements.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/images/settle-logo.svg">
+  <link rel="stylesheet" href="/css/style.css">
+  
+  <!-- Immediate Auth & Theme Guard -->
+  <script>
+    (function() {
+      const theme = localStorage.getItem('settle_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+      
+      const token = localStorage.getItem('settle_agent_token');
+      if (!token) {
+        window.location.replace('/login');
+      }
+    })();
+  </script>
+</head>
+<body class="dashboard-body">
+
+  <div class="dash-app-wrapper">
+    
+    <!-- LEFT SIDEBAR -->
+    <aside class="dash-sidebar">
+      <div class="sidebar-top">
+        <a href="/dashboard" class="sidebar-brand-btn" title="Settle Agent Dashboard">
+          <img src="/images/settle-logo.svg" alt="Settle Logo" class="brand-logo-img">
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-side-btn active" data-dash-tab="overview" title="Dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+            <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+            <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+            <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+          </svg>
+          <span class="nav-side-label">Dashboard</span>
+        </button>
+
+        <button class="nav-side-btn" data-dash-tab="inventory" title="Inventory">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+          <span class="nav-side-label">Inventory</span>
+        </button>
+
+        <button class="nav-side-btn" data-dash-tab="suppliers" title="Suppliers">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span class="nav-side-label">Suppliers</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="btn-sidebar-logout" id="btn-logout" title="Sign Out">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span class="nav-side-label">Log out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN DASHBOARD CONTENT AREA -->
+    <div class="dash-main-area">
+      
+      <!-- Topbar matching reference -->
+      <header class="dash-reference-topbar">
+        <div class="dash-topbar-title-wrap">
+          <h1 class="dash-page-title" id="dash-heading-title">Dashboard</h1>
+        </div>
+
+        <div class="dash-search-pill-wrap">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text" id="dash-global-search" placeholder="Search inventory, suppliers, transactions..." autocomplete="off">
+        </div>
+
+        <div class="dash-topbar-right">
+          <!-- Payout corridor chip -->
+          <div class="corridor-pill-chip">
+            <span id="topbar-rate-pill">🇳🇬 1 USDC = ₦1,520</span>
+          </div>
+
+          <!-- Sandbox / Live Mode Toggle -->
+          <div class="mode-toggle-segmented" style="display: flex; background: rgba(0, 0, 0, 0.35); border-radius: 30px; padding: 2px; border: 1px solid rgba(255, 255, 255, 0.08); margin-right: 8px; align-items: center; height: 32px;">
+            <button id="toggle-mode-sandbox" class="mode-toggle-btn active" style="background: var(--solana-green); color: #0c0d12; border: none; border-radius: 30px; padding: 4px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; height: 100%; display: flex; align-items: center; justify-content: center; outline: none;" type="button">
+              Sandbox
+            </button>
+            <button id="toggle-mode-live" class="mode-toggle-btn" style="background: transparent; color: var(--text-dim); border: none; border-radius: 30px; padding: 4px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; height: 100%; display: flex; align-items: center; justify-content: center; outline: none;" type="button">
+              Live
+            </button>
+          </div>
+
+          <!-- Agent status -->
+          <div class="agent-chip-dot" title="Agent Status: Active & Monitoring">
+            <span class="status-dot pulsing"></span>
+          </div>
+
+          <!-- Theme Toggle -->
+          <button class="btn-theme-toggle" id="btn-dash-theme-toggle" title="Toggle Light/Dark Mode" aria-label="Toggle theme">
+            <svg class="sun-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <svg class="moon-icon" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+          </button>
+
+          <!-- User Avatar -->
+          <div class="dash-user-avatar-btn" id="dash-user-avatar" title="Merchant Account">
+            <span id="user-avatar-initial">K</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- VIEW PANE 1: MAIN DASHBOARD STAGE (Matches dash.jpg 1-to-1) -->
+      <div class="dash-view-pane active" id="pane-dashboard">
+        <div class="dash-elevated-stage">
+          
+          <!-- Sandbox Testing Controls -->
+          <div class="sandbox-panel" id="dashboard-sandbox-panel">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.25rem;">🛠️</span>
+                <div>
+                  <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px;">SANDBOX CONTROLS</h4>
+                  <p style="margin: 2px 0 0 0; color: var(--text-dim); font-size: 0.75rem;">Fast-track testing commands & Solana faucet instructions</p>
+                </div>
+              </div>
+              <span style="font-size: 0.65rem; background: rgba(20, 241, 149, 0.15); color: #14f195; border: 1px solid rgba(20, 241, 149, 0.3); padding: 2px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Sandbox Active</span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 4px;">
+              <!-- Action 1: Fund USDC -->
+              <div class="sandbox-card">
+                <div>
+                  <div class="sandbox-card-title">Deposit USDC</div>
+                  <div class="sandbox-card-value">Credit USDC Balance</div>
+                </div>
+                <button type="button" class="btn-volt-action" id="sandbox-btn-fund-usdc" style="margin-top: 12px; width: 100%; padding: 8px 14px; font-size: 0.75rem; background: #10b981; border-color: #10b981;">
+                  Instantly Fund $10,000 USDC
+                </button>
+              </div>
+
+              <!-- Action 2: Trigger Low Stock -->
+              <div class="sandbox-card">
+                <div>
+                  <div class="sandbox-card-title">Trigger Restock Scan</div>
+                  <div class="sandbox-card-value">Deplete Stock & Request</div>
+                </div>
+                <button type="button" class="btn-volt-action" id="sandbox-btn-deplete-stock" style="margin-top: 12px; width: 100%; padding: 8px 14px; font-size: 0.75rem; background: #ef4444; border-color: #ef4444;">
+                  Deplete Stock & Request
+                </button>
+              </div>
+
+              <!-- Action 3: SOL Faucet info -->
+              <div class="sandbox-card sandbox-card-wide">
+                <div>
+                  <div class="sandbox-card-title">Solana Gas Faucet (For Explorer Txs)</div>
+                  <div class="sandbox-info-text">
+                    If transaction explorer links show "Tx Not Found", request free Devnet SOL to:
+                  </div>
+                  <div class="sandbox-pubkey-box">
+                    <code style="font-family: monospace; font-size: 0.72rem; color: var(--solana-green); flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="sandbox-pubkey-txt">6KtEhsDTDcdLN6XuYdW7HynwpD5wTRj9iaYwVSAvrWNu</code>
+                    <button type="button" id="sandbox-btn-copy-pubkey" class="sandbox-copy-btn" title="Copy Address">📋</button>
+                  </div>
+                </div>
+                <a href="https://faucet.solana.com/" target="_blank" style="margin-top: 8px; display: inline-block; font-size: 0.75rem; color: var(--solana-cyan); text-decoration: none; font-weight: 600;">
+                  Open Solana Web Faucet ↗
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <!-- TOP ROW: Total Working Capital Balance Header -->
+          <div class="stage-balance-header">
+            <div class="balance-title-col">
+              <span class="balance-eyebrow">TOTAL WORKING CAPITAL</span>
+              <div class="balance-number-row">
+                <span class="balance-big" id="stage-total-balance">$154,610<span class="balance-cents">.00 USDC</span></span>
+              </div>
+            </div>
+
+            <div class="balance-metrics-right">
+              <div class="agent-live-badge">
+                <span class="status-dot pulsing"></span>
+                <span>Autonomous Stock Agent Active</span>
+              </div>
+              <button class="btn-volt-action" id="btn-header-fund-usdc" style="width: auto; padding: 8px 18px; font-size: 0.82rem; display: flex; align-items: center; gap: 6px;">
+                <span>+ Fund USDC</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- MULTI-CURRENCY POSITIONS & TREASURY STRIP -->
+          <div class="currency-positions-section">
+            <div class="cur-pos-header">
+              <span class="cur-pos-eyebrow">TREASURY POSITIONS & LIQUIDITY</span>
+            </div>
+            
+            <div class="cur-pos-grid">
+              
+              <!-- 1. USDC Position (Primary) -->
+              <div class="cur-pos-card active-cur" id="card-pos-usdc">
+                <div class="cur-card-top">
+                  <div class="cur-flag-wrap">
+                    <span class="cur-icon-circle">💵</span>
+                    <div>
+                      <span class="cur-code">USDC</span>
+                      <span class="cur-chain">Solana SPL</span>
+                    </div>
+                  </div>
+                  <button class="btn-micro-faucet" id="btn-card-fund-usdc" style="background-color: #d4f738; color: #121316; font-weight: 800;">+ Fund</button>
+                </div>
+                <div class="cur-amount-val" id="pos-usdc-amount">$52,291.00</div>
+                <div class="cur-sub-val">Settlement Treasury</div>
+              </div>
+
+              <!-- 2. NGN Position (Nigeria - Live at Launch) -->
+              <div class="cur-pos-card">
+                <div class="cur-card-top">
+                  <div class="cur-flag-wrap">
+                    <span class="cur-icon-circle">🇳🇬</span>
+                    <div>
+                      <span class="cur-code">NGN</span>
+                      <span class="cur-chain">Naira (Access Bank)</span>
+                    </div>
+                  </div>
+                  <span class="cur-pill-tag" style="background-color: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3);">● Live Launch</span>
+                </div>
+                <div class="cur-amount-val" id="pos-ngn-amount">₦18,450,000</div>
+                <div class="cur-sub-val" id="pos-ngn-usd">≈ $12,138.00 USDC</div>
+              </div>
+
+              <!-- 3. GHS Position (Ghana - Coming Soon) -->
+              <div class="cur-pos-card" style="opacity: 0.85;">
+                <div class="cur-card-top">
+                  <div class="cur-flag-wrap">
+                    <span class="cur-icon-circle">🇬🇭</span>
+                    <div>
+                      <span class="cur-code">GHS</span>
+                      <span class="cur-chain">Ghana Cedi (MoMo)</span>
+                    </div>
+                  </div>
+                  <span class="cur-rate-chip" style="color: #f59e0b; font-size: 0.65rem;">Coming Soon</span>
+                </div>
+                <div class="cur-amount-val">₵0</div>
+                <div class="cur-sub-val">≈ $0.00 USDC</div>
+              </div>
+
+              <!-- 4. SOL Position (Gas) -->
+              <div class="cur-pos-card">
+                <div class="cur-card-top">
+                  <div class="cur-flag-wrap">
+                    <span class="cur-icon-circle">⚡</span>
+                    <div>
+                      <span class="cur-code">SOL</span>
+                      <span class="cur-chain">Gas Capital</span>
+                    </div>
+                  </div>
+                  <button class="btn-micro-faucet" id="btn-quick-sol-faucet" title="Request 1 SOL">+1 SOL</button>
+                </div>
+                <div class="cur-amount-val" id="pos-sol-amount">14.20 SOL</div>
+                <div class="cur-sub-val" id="pos-sol-usd">≈ $2,130.00 USD</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- PRIMARY SPLIT ROW: (Volt Portfolio Card + Wide Restock & Chart Card) -->
+          <div class="stage-split-row">
+            
+            <!-- LEFT: SIGNATURE VOLT YELLOW-GREEN ALLOCATION CARD -->
+            <div class="volt-allocation-card">
+              <div class="volt-card-header">
+                <h3>My Portfolio</h3>
+                <button class="btn-volt-action" id="btn-open-add-product" style="width: auto; padding: 4px 12px; font-size: 0.76rem; border-radius: 8px; font-weight: 800;">+ Add Item</button>
+              </div>
+
+              <div class="volt-items-list" id="volt-inventory-list">
+                <!-- Dynamically populated stock items -->
+              </div>
+
+              <!-- Quick action in allocation card -->
+              <div class="volt-card-footer">
+                <button class="btn-volt-action" id="btn-force-scan">Run AI Stock Scan</button>
+              </div>
+            </div>
+
+            <!-- RIGHT: WIDE CHART CARD -->
+            <div class="stage-chart-card">
+              
+              <div class="chart-header-row">
+                <div class="chart-title-wrap">
+                  <h3 class="chart-heading">Chart</h3>
+                  <div class="chart-pair-select">
+                    <span>USDC / NGN (Solana Rail) ▾</span>
+                  </div>
+                </div>
+
+                <div class="chart-controls-right">
+                  <div class="timeframe-pill-selector">
+                    <button class="tf-btn active" data-tf="1h">1h</button>
+                    <button class="tf-btn" data-tf="3h">3h</button>
+                    <button class="tf-btn" data-tf="1d">1d</button>
+                    <button class="tf-btn" data-tf="1w">1w</button>
+                    <button class="tf-btn" data-tf="1m">1m</button>
+                  </div>
+                  <div class="currency-tag-pill">
+                    <span>$ USD ▾</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-price-display">
+                <span class="chart-sub-label">Settlement Velocity & Volume</span>
+                <div class="chart-big-rate" id="chart-volume-settled">$0.00 <span class="chart-unit">USDC</span></div>
+              </div>
+
+              <!-- Interactive Chart Canvas / SVG Graphics matching dash.jpg -->
+              <div class="chart-canvas-wrapper">
+                <svg class="main-chart-svg" viewBox="0 0 600 180" preserveAspectRatio="none">
+                  <!-- Grid horizontal lines -->
+                  <line x1="0" y1="30" x2="600" y2="30" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,3"/>
+                  <line x1="0" y1="75" x2="600" y2="75" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,3"/>
+                  <line x1="0" y1="120" x2="600" y2="120" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,3"/>
+                  
+                  <!-- Volume bars at bottom -->
+                  <rect x="30" y="145" width="6" height="25" fill="rgba(212,247,56,0.15)"/>
+                  <rect x="50" y="130" width="6" height="40" fill="rgba(212,247,56,0.18)"/>
+                  <rect x="70" y="140" width="6" height="30" fill="rgba(212,247,56,0.12)"/>
+                  <rect x="90" y="120" width="6" height="50" fill="rgba(212,247,56,0.2)"/>
+                  <rect x="110" y="135" width="6" height="35" fill="rgba(212,247,56,0.15)"/>
+                  <rect x="130" y="115" width="6" height="55" fill="rgba(212,247,56,0.25)"/>
+                  <rect x="150" y="125" width="6" height="45" fill="rgba(212,247,56,0.2)"/>
+                  <rect x="170" y="110" width="6" height="60" fill="rgba(212,247,56,0.3)"/>
+                  <rect x="200" y="120" width="6" height="50" fill="rgba(212,247,56,0.2)"/>
+                  <rect x="230" y="135" width="6" height="35" fill="rgba(212,247,56,0.15)"/>
+                  <rect x="260" y="100" width="6" height="70" fill="rgba(212,247,56,0.35)"/>
+                  <rect x="290" y="115" width="6" height="55" fill="rgba(212,247,56,0.2)"/>
+                  <rect x="320" y="90" width="6" height="80" fill="rgba(212,247,56,0.4)"/>
+                  <rect x="350" y="110" width="6" height="60" fill="rgba(212,247,56,0.2)"/>
+                  <rect x="380" y="85" width="6" height="85" fill="rgba(212,247,56,0.45)"/>
+                  <rect x="410" y="105" width="6" height="65" fill="rgba(212,247,56,0.25)"/>
+                  <rect x="440" y="80" width="6" height="90" fill="rgba(212,247,56,0.5)"/>
+                  <rect x="470" y="95" width="6" height="75" fill="rgba(212,247,56,0.3)"/>
+                  <rect x="500" y="70" width="6" height="100" fill="rgba(212,247,56,0.6)"/>
+                  <rect x="530" y="85" width="6" height="85" fill="rgba(212,247,56,0.4)"/>
+                  <rect x="560" y="65" width="6" height="105" fill="rgba(212,247,56,0.65)"/>
+
+                  <!-- Glowing Trendline in Volt #D4F738 -->
+                  <path d="M10 135 L 45 110 L 70 145 L 105 100 L 140 120 L 175 80 L 210 95 L 245 65 L 280 85 L 315 50 L 350 75 L 385 40 L 420 65 L 455 35 L 490 55 L 525 25 L 565 30 L 590 20" 
+                        fill="none" 
+                        stroke="#D4F738" 
+                        stroke-width="2.8" 
+                        stroke-linecap="round" 
+                        stroke-linejoin="round"/>
+                </svg>
+
+                <div class="chart-timeline-labels">
+                  <span>20:00</span>
+                  <span>20:10</span>
+                  <span>20:20</span>
+                  <span>20:30</span>
+                  <span>20:40</span>
+                  <span>20:50</span>
+                </div>
+              </div>
+
+              <!-- PENDING REORDER APPROVAL NOTIFICATION STRIP -->
+              <div class="stage-approval-banner" id="approval-zone" style="display: none;">
+                <div class="ap-banner-left">
+                  <span class="ap-badge-urgent">1-TAP APPROVAL</span>
+                  <div class="ap-text">
+                    <strong id="ap-product-title">Samsung 25W Fast Charger (50 Units)</strong>
+                    <span>Supplier: Lagos Electronics Direct Ltd • $250.00 USDC (₦380,000 NGN)</span>
+                  </div>
+                </div>
+                <div class="ap-actions-row">
+                  <button class="btn-ap-approve" id="btn-quick-approve">Approve & Pay (Solana)</button>
+                  <button class="btn-ap-reject" id="btn-quick-reject">Reject</button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- VIEW PANE 2: INVENTORY & STOCK BUFFER -->
+      <div class="dash-view-pane" id="pane-inventory" style="display: none;">
+        <div class="dash-elevated-stage">
+          <div class="card-header" style="margin-bottom: 20px;">
+            <div class="card-header-left">
+              <div class="card-header-icon" style="background-color: rgba(34, 197, 94, 0.15); color: #22c55e;">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+              </div>
+              <div>
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-heading); margin: 0;">Tracked SME Inventory & Stock Triggers</h3>
+                <p class="card-subtitle" style="margin-top: 4px; color: var(--text-muted);">AI agent continuously monitors thresholds & prepares restock orders</p>
+              </div>
+            </div>
+            <button class="btn-volt-action" id="btn-inventory-add-product" style="width: auto; padding: 8px 18px; font-size: 0.85rem; font-weight: 800;">+ Add New Product</button>
+          </div>
+
+          <div class="inventory-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Product & SKU</th>
+                  <th>Current Stock</th>
+                  <th>Safety Buffer</th>
+                  <th>Unit Cost</th>
+                  <th>Supplier Corridor</th>
+                  <th>Simulate Sales</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-table-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW PANE 3: CONNECTED SUPPLIERS & CORRIDORS -->
+      <div class="dash-view-pane" id="pane-suppliers" style="display: none;">
+        <div class="dash-elevated-stage">
+          <div class="card-header" style="margin-bottom: 16px;">
+            <div class="card-header-left">
+              <div class="card-header-icon" style="background-color: rgba(212, 247, 56, 0.15); color: var(--solana-green);">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm14 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div>
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-heading); margin: 0;">Supplier Network & Dedicated Solana Wallets</h3>
+                <p class="card-subtitle" style="margin-top: 4px; color: var(--text-muted);">Search verified suppliers, view dedicated Web3 addresses, and connect instant payout corridors</p>
+              </div>
+            </div>
+            <button class="btn-volt-action" id="btn-open-add-supplier" style="width: auto; padding: 8px 18px; font-size: 0.85rem; font-weight: 800;">+ Connect Supplier</button>
+          </div>
+
+          <!-- Supplier Search & Corridor Filters -->
+          <div class="suppliers-filter-bar" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background-color: var(--bg-card-inner); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;">
+            <div style="flex: 1; min-width: 260px; position: relative;">
+              <input type="text" id="input-search-suppliers" class="input-control" placeholder="🔍 Search suppliers by company name, email, or bank..." style="padding-left: 14px; font-size: 0.84rem;">
+            </div>
+            <div class="corridor-filter-chips" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-supp-filter active" data-country="ALL" style="background-color: var(--solana-green); color: #0d0e12; border: none; padding: 6px 14px; border-radius: 9999px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">All Suppliers</button>
+              <button class="btn-supp-filter" data-country="Nigeria" style="background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 9999px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">🇳🇬 Nigeria (Live Rail)</button>
+              <button class="btn-supp-filter" data-country="Ghana" style="background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 9999px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">🇬🇭 Ghana (USDC)</button>
+              <button class="btn-supp-filter" data-country="Kenya" style="background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 9999px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">🇰🇪 Kenya (USDC)</button>
+              <button class="btn-supp-filter" data-country="Rwanda" style="background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 14px; border-radius: 9999px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">🇷🇼 Rwanda (USDC)</button>
+            </div>
+          </div>
+
+          <div class="suppliers-grid-wrap" id="suppliers-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 20px;">
+            <!-- Dynamically populated supplier cards -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Modal for Settlement Receipt Details -->
+  <div class="modal-overlay" id="receipt-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="success-icon-badge">✓</div>
+        <div>
+          <h3>Solana Instant Settlement Receipt</h3>
+          <p class="modal-subtitle">Direct On-Chain Supplier Payout Confirmation</p>
+        </div>
+        <button class="btn-close" id="btn-close-modal">×</button>
+      </div>
+      <div class="modal-body" id="receipt-modal-body">
+        <!-- Populated -->
+      </div>
+      <div class="modal-footer">
+        <a href="#" target="_blank" class="btn-primary" id="modal-explorer-link">View on Solana Explorer</a>
+        <button class="btn-secondary" id="modal-done-btn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Funding USDC Position -->
+  <div class="modal-overlay" id="fund-usdc-modal">
+    <div class="modal-card" style="max-width: 500px;">
+      <div class="modal-header">
+        <div class="modal-icon-wrap" style="background-color: rgba(212, 247, 56, 0.15); color: #d4f738; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">💵</div>
+        <div>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800;">Fund USDC Treasury Position</h3>
+          <p class="modal-subtitle" style="margin: 2px 0 0 0;">Solana Devnet SPL Mint Liquidity</p>
+        </div>
+        <button class="btn-close" id="btn-close-fund-modal">×</button>
+      </div>
+      <div class="modal-body">
+        
+        <label class="field-label" style="display: block; margin-bottom: 8px;">Select Quick Amount (USDC)</label>
+        <div class="quick-amount-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px;">
+          <button type="button" class="btn-amt-select active" data-amt="1000">+$1,000</button>
+          <button type="button" class="btn-amt-select" data-amt="5000">+$5,000</button>
+          <button type="button" class="btn-amt-select" data-amt="10000">+$10,000</button>
+          <button type="button" class="btn-amt-select" data-amt="25000">+$25,000</button>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="field-label" for="fund-custom-amount">Custom Amount (USDC)</label>
+          <input type="number" id="fund-custom-amount" class="input-control" value="1000" min="10" step="10">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="field-label">Payment Method / Source</label>
+          <select id="fund-payment-method" class="input-control">
+            <option value="Devnet Faucet Credit">Solana Devnet Liquidity Pool (Instant Faucet)</option>
+            <option value="Direct On-Chain Transfer">Solana SPL Token Deposit (Self-Transfer)</option>
+            <option value="Card / Bank Wire">Cross-Border Bank Wire (Simulated)</option>
+          </select>
+        </div>
+
+        <div class="deposit-address-card" style="background-color: var(--bg-card-inner); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+          <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 4px;">YOUR SOLANA USDC DEPOSIT ADDRESS</div>
+          <div style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--solana-green); word-break: break-all;" id="deposit-wallet-address">9tK8...SolanaTreasuryVaultAddress</div>
+        </div>
+
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button type="button" class="btn-secondary" id="btn-cancel-fund">Cancel</button>
+        <button type="button" class="btn-volt-action" id="btn-confirm-fund" style="width: auto; padding: 10px 24px; font-weight: 800;">Deposit & Credit USDC</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Adding New Inventory Product -->
+  <div class="modal-overlay" id="add-product-modal">
+    <div class="modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <div class="modal-icon-wrap" style="background-color: rgba(212, 247, 56, 0.15); color: #d4f738; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">📦</div>
+        <div>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-heading);">Add Product to Tracked Inventory</h3>
+          <p class="modal-subtitle" style="margin: 2px 0 0 0;">Autonomous agent will monitor buffer thresholds</p>
+        </div>
+        <button class="btn-close" id="btn-close-product-modal">×</button>
+      </div>
+      
+      <form id="form-add-product">
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="field-label" for="add-prod-name">Product Name *</label>
+            <input type="text" id="add-prod-name" class="input-control" placeholder="e.g. iPhone 15 Pro USB-C Fast Adapter" required>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="form-group">
+              <label class="field-label" for="add-prod-sku">SKU Code *</label>
+              <input type="text" id="add-prod-sku" class="input-control" placeholder="e.g. IPH-15P-CHG" required>
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="add-prod-category">Category</label>
+              <select id="add-prod-category" class="input-control">
+                <option value="Mobile Accessories">Mobile Accessories</option>
+                <option value="Power & Batteries">Power & Batteries</option>
+                <option value="Audio & Sound">Audio & Sound</option>
+                <option value="Computing">Computing</option>
+                <option value="Consumer Goods">Consumer Goods</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="form-group">
+              <label class="field-label" for="add-prod-stock">Current Stock *</label>
+              <input type="number" id="add-prod-stock" class="input-control" value="45" min="1" required>
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="add-prod-threshold">Buffer Threshold *</label>
+              <input type="number" id="add-prod-threshold" class="input-control" value="15" min="1" required>
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="add-prod-reorder-qty">Reorder Qty *</label>
+              <input type="number" id="add-prod-reorder-qty" class="input-control" value="50" min="1" required>
+            </div>
+          </div>
+
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+            <div class="form-group">
+              <label class="field-label" for="add-prod-cost">Unit Cost (USDC) *</label>
+              <input type="number" id="add-prod-cost" class="input-control" value="12.50" min="0.1" step="0.1" required>
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="add-prod-supplier">Supplier Corridor</label>
+              <select id="add-prod-supplier" class="input-control">
+                <option value="supp_ng_01">Lagos Prime Tech (Nigeria 🇳🇬 - NGN Access Bank)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn-secondary" id="btn-cancel-product">Cancel</button>
+          <button type="submit" class="btn-volt-action" id="btn-submit-add-product" style="width: auto; padding: 10px 24px; font-weight: 800;">Add Product to Inventory</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal for Adding / Connecting New Supplier -->
+  <div class="modal-overlay" id="add-supplier-modal">
+    <div class="modal-card" style="max-width: 580px;">
+      <div class="modal-header">
+        <div class="modal-icon-wrap" style="background-color: rgba(212, 247, 56, 0.15); color: #d4f738; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🏢</div>
+        <div>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-heading);">Add Restock Supplier</h3>
+          <p class="modal-subtitle" style="margin: 2px 0 0 0;">Provision a dedicated Solana wallet & configure local payout details</p>
+        </div>
+        <button class="btn-close" id="btn-close-supplier-modal">×</button>
+      </div>
+      
+      <form id="form-add-supplier">
+        <div class="modal-body">
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="field-label" for="add-supp-name">Supplier / Company Name *</label>
+            <input type="text" id="add-supp-name" class="input-control" placeholder="e.g. Lagos Prime Electronics Ltd" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="field-label" for="add-supp-email">Contact Email *</label>
+              <input type="email" id="add-supp-email" class="input-control" placeholder="orders@supplier.com" required>
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="add-supp-phone">Phone / WhatsApp</label>
+              <input type="text" id="add-supp-phone" class="input-control" placeholder="+234 802 334 4556">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="field-label" for="add-supp-country">Country Corridor *</label>
+              <select id="add-supp-country" class="input-control">
+                <option value="Nigeria" selected>Nigeria 🇳🇬 (NGN) — Live Rail</option>
+                <option value="Ghana">Ghana 🇬🇭 (GHS) — MoMo / Bank</option>
+                <option value="Kenya">Kenya 🇰🇪 (KES) — M-Pesa / Bank</option>
+                <option value="Rwanda">Rwanda 🇷🇼 (RWF) — MoMo / Bank</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="add-supp-bank-name" id="lbl-add-supp-bank">Bank / MoMo Rail *</label>
+              <select id="add-supp-bank-name" class="input-control">
+                <option value="Access Bank">Access Bank (NIBSS Instant)</option>
+                <option value="Zenith Bank">Zenith Bank Nigeria</option>
+                <option value="GTBank">Guaranty Trust Bank (GTBank)</option>
+                <option value="United Bank for Africa (UBA)">United Bank for Africa (UBA)</option>
+                <option value="First Bank of Nigeria">First Bank of Nigeria</option>
+                <option value="Stanbic IBTC">Stanbic IBTC Bank</option>
+                <option value="Kuda MFB">Kuda Microfinance Bank</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Corridor Status Banner -->
+          <div id="modal-corridor-notice" style="background-color: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.25); border-radius: 8px; padding: 10px 12px; font-size: 0.76rem; color: #22c55e; margin-bottom: 14px; line-height: 1.45;">
+            ✦ <strong>Launch Settlement Rail:</strong> Solana USDC restock payments are automatically converted to Naira (NGN) and deposited instantly via Nigerian NIBSS interbank rails.
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="field-label" for="add-supp-account-num" id="lbl-add-supp-acct">Bank Account Number *</label>
+              <input type="text" id="add-supp-account-num" class="input-control" placeholder="10-digit NUBAN Account" required>
+            </div>
+            <div class="form-group">
+              <label class="field-label" for="add-supp-account-name">Account / Wallet Beneficiary Name *</label>
+              <input type="text" id="add-supp-account-name" class="input-control" placeholder="Beneficiary Account Name" required>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="field-label" for="add-supp-solana-key">Supplier Dedicated Solana Key (Auto-Generated if Blank)</label>
+            <input type="text" id="add-supp-solana-key" class="input-control" placeholder="Leave empty to auto-generate non-custodial Solana wallet address">
+          </div>
+        </div>
+
+        <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn-secondary" id="btn-cancel-supplier">Cancel</button>
+          <button type="submit" class="btn-volt-action" id="btn-submit-add-supplier" style="width: auto; padding: 10px 24px; font-weight: 800;">Save & Connect Supplier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal for Mainnet Coming Soon Notice -->
+  <div class="modal-overlay" id="mainnet-restricted-modal">
+    <div class="modal-card" style="max-width: 460px;">
+      <div class="modal-header" style="justify-content: flex-start; gap: 14px;">
+        <div class="modal-icon-wrap" style="background-color: rgba(239, 68, 68, 0.15); color: #ef4444; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🔒</div>
+        <div>
+          <h3 class="modal-title">Mainnet Restricted</h3>
+          <p class="modal-subtitle" style="margin: 2px 0 0 0;">Settle Agent Developer Preview</p>
+        </div>
+        <button class="btn-close" id="btn-close-mainnet-modal-x">×</button>
+      </div>
+      <div class="modal-body" style="color: var(--text-dim); font-size: 0.85rem; line-height: 1.5; padding: 24px;">
+        This application is running in **Sandbox Mode (Solana Devnet)**. Mainnet deployment is disabled in this developer preview to prevent real funds from being spent.
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-close-mainnet-modal-cancel">Cancel</button>
+        <button class="btn-primary" id="btn-close-mainnet-modal-confirm" style="background: var(--solana-green); color: #0c0d12; border: none; font-weight: 800; padding: 10px 20px; border-radius: var(--radius-m); cursor: pointer; font-size: 0.82rem;" type="button">Got It</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
