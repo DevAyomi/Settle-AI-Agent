@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { CONFIG } from '../config/index.js';
 import { solanaService } from '../services/solana.service.js';
 import { db } from '../db/index.js';
 import { telegramService } from '../services/telegram.service.js';
@@ -104,20 +105,71 @@ export async function telegramRoutes(fastify: FastifyInstance) {
     console.log('[Telegram Webhook] Received update:', JSON.stringify(update));
 
     if (update?.callback_query) {
+      const callbackQueryId = update.callback_query.id;
       const callbackData = update.callback_query.data;
       const [action, reorderId] = callbackData.split('_');
 
       if (action === 'approve' && reorderId) {
         try {
           await agentService.approveReorder(reorderId, 'TELEGRAM');
+          
+          // Answer callback to stop loading spinner in Telegram client
+          if (CONFIG.TELEGRAM_BOT_TOKEN) {
+            await fetch(`https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                callback_query_id: callbackQueryId,
+                text: '✅ Payout approved! Broadcasting on Solana Devnet...',
+                show_alert: false
+              })
+            }).catch(e => console.warn('Failed to send answerCallbackQuery:', e.message));
+          }
         } catch (err: any) {
           console.error('[Telegram Webhook] Approval failed:', err);
+          
+          // Show Telegram alert modal with the error message
+          if (CONFIG.TELEGRAM_BOT_TOKEN) {
+            await fetch(`https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                callback_query_id: callbackQueryId,
+                text: `⚠️ Approval failed: ${err.message}`,
+                show_alert: true
+              })
+            }).catch(e => console.warn('Failed to send error answerCallbackQuery:', e.message));
+          }
         }
       } else if (action === 'reject' && reorderId) {
         try {
           await agentService.rejectReorder(reorderId, 'Rejected from Telegram');
+          
+          if (CONFIG.TELEGRAM_BOT_TOKEN) {
+            await fetch(`https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                callback_query_id: callbackQueryId,
+                text: '❌ Reorder rejected successfully.',
+                show_alert: false
+              })
+            }).catch(e => console.warn('Failed to send answerCallbackQuery:', e.message));
+          }
         } catch (err: any) {
           console.error('[Telegram Webhook] Rejection failed:', err);
+          
+          if (CONFIG.TELEGRAM_BOT_TOKEN) {
+            await fetch(`https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                callback_query_id: callbackQueryId,
+                text: `⚠️ Rejection failed: ${err.message}`,
+                show_alert: true
+              })
+            }).catch(e => console.warn('Failed to send error answerCallbackQuery:', e.message));
+          }
         }
       }
     }
