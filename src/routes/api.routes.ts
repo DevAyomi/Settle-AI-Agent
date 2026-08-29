@@ -107,7 +107,10 @@ export async function telegramRoutes(fastify: FastifyInstance) {
     if (update?.callback_query) {
       const callbackQueryId = update.callback_query.id;
       const callbackData = update.callback_query.data;
-      const [action, reorderId] = callbackData.split('_');
+      
+      const parts = callbackData.split('_');
+      const action = parts[0];
+      const reorderId = parts.slice(1).join('_');
 
       if (action === 'approve' && reorderId) {
         try {
