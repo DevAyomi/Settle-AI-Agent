@@ -1069,11 +1069,12 @@ function renderSettlementHistory(all) {
   tbody.innerHTML = all.map(ord => {
     let txLink = `<span style="color: var(--text-dim); font-size: 0.75rem;">Pending</span>`;
     if (ord.solana_tx_signature) {
-      const isSimulated = ord.error_message === 'SOLANA_FAUCET_RATE_LIMITED';
-      const label = isSimulated ? 'Simulation' : 'Devnet On-Chain';
-      const color = isSimulated ? 'rgba(255,255,255,0.1)' : 'rgba(20,241,149,0.15)';
-      const textColor = isSimulated ? '#94a3b8' : '#14f195';
-      const title = isSimulated ? 'Solana faucet was rate-limited; this transaction is simulated locally.' : 'On-Chain Devnet verified transaction.';
+      // Every stored signature is a confirmed on-chain SPL USDC transfer;
+      // settlements that cannot be confirmed are marked FAILED and store no signature.
+      const label = 'Devnet On-Chain';
+      const color = 'rgba(20,241,149,0.15)';
+      const textColor = '#14f195';
+      const title = 'On-Chain Devnet verified USDC transfer.';
       
       txLink = `
         <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
@@ -1216,10 +1217,6 @@ function showReceiptModal(reorder) {
     <div class="receipt-tx-box">
       <strong style="color: var(--text-muted); display: block; margin-bottom: 4px;">Solana Tx Hash:</strong>
       ${reorder.solana_tx_signature || 'Confirmed'}
-      ${reorder.error_message === 'SOLANA_FAUCET_RATE_LIMITED' 
-        ? `<span style="display: block; font-size: 0.72rem; color: #f59e0b; margin-top: 6px; font-weight: 500;">💡 Faucet Rate-Limited: Simulating locally. To test on-chain, please fund the merchant wallet address: <code style="background: rgba(0,0,0,0.25); padding: 2px 4px; border-radius: 3px; font-family: monospace; display: block; margin-top: 4px; word-break: break-all;">6KtEhsDTDcdLN6XuYdW7HynwpD5wTRj9iaYwVSAvrWNu</code></span>` 
-        : ''
-      }
     </div>
   `;
 

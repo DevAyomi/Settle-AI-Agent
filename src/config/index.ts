@@ -27,6 +27,8 @@ export const CONFIG = {
   // Merchant & Supplier Keypair storage paths
   MERCHANT_KEY_PATH: process.env.MERCHANT_KEY_PATH || path.join(projectRoot, 'data', 'merchant_keypair.json'),
   SUPPLIER_KEY_PATH: process.env.SUPPLIER_KEY_PATH || path.join(projectRoot, 'data', 'supplier_keypair.json'),
+  // Mint authority for the app-managed devnet test USDC mint (absent when using Circle USDC)
+  MINT_AUTHORITY_KEY_PATH: process.env.MINT_AUTHORITY_KEY_PATH || path.join(projectRoot, 'data', 'usdc_mint_authority.json'),
   
   // Telegram Bot Config
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',

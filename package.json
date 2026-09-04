@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "devnet:mint": "tsx scripts/devnet-settle.ts mint",
+    "devnet:fund": "tsx scripts/devnet-settle.ts fund",
+    "devnet:settle": "tsx scripts/devnet-settle.ts settle"
   },
   "keywords": [],
   "author": "",

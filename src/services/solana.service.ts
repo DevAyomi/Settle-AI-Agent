@@ -3,17 +3,27 @@ import {
   Keypair,
   PublicKey,
   Transaction,
-  SystemProgram,
   sendAndConfirmTransaction,
   LAMPORTS_PER_SOL,
   TransactionInstruction
 } from '@solana/web3.js';
-import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
+import {
+  getAssociatedTokenAddressSync,
+  getAccount,
+  getMint,
+  createAssociatedTokenAccountIdempotentInstruction,
+  createTransferCheckedInstruction,
+  createMint,
+  mintTo,
+  TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID
+} from '@solana/spl-token';
 import fs from 'fs';
 import path from 'path';
-import bs58 from 'bs58';
 import { CONFIG } from '../config/index.js';
 import { db } from '../db/index.js';
+
+const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 
 export interface SettlementResult {
   signature: string;
@@ -24,7 +34,13 @@ export interface SettlementResult {
   amountNgn: number;
   recipientPublicKey: string;
   senderPublicKey: string;
-  isSimulatedFallback?: boolean;
+  /** Mint actually transferred, so the payout is independently verifiable on-chain. */
+  mintAddress: string;
+  /** Recipient's SPL token account that received the USDC. */
+  recipientTokenAccount: string;
+  /** Supplier's on-chain USDC balance before/after the transfer. */
+  recipientBalanceBefore: number;
+  recipientBalanceAfter: number;
 }
 
 export class SolanaService {
@@ -32,6 +48,9 @@ export class SolanaService {
   private merchantKeypair!: Keypair;
   private supplierKeypair!: Keypair;
   private usdcMintPublicKey: PublicKey;
+  /** Mint authority for the app-managed devnet test mint. Absent for Circle USDC. */
+  private mintAuthorityKeypair?: Keypair;
+  private mintInfoCache?: { decimals: number; programId: PublicKey };
 
   constructor() {
     this.connection = new Connection(CONFIG.SOLANA_RPC_URL, {
@@ -42,38 +61,38 @@ export class SolanaService {
     this.initKeypairs();
   }
 
+  private loadOrCreateKeypair(filePath: string): Keypair {
+    if (fs.existsSync(filePath)) {
+      try {
+        const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        return Keypair.fromSecretKey(new Uint8Array(raw));
+      } catch {
+        // fall through and regenerate
+      }
+    }
+    const kp = Keypair.generate();
+    fs.writeFileSync(filePath, JSON.stringify(Array.from(kp.secretKey)));
+    return kp;
+  }
+
   private initKeypairs() {
     const dataDir = path.dirname(CONFIG.MERCHANT_KEY_PATH);
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    // Initialize Merchant Keypair
-    if (fs.existsSync(CONFIG.MERCHANT_KEY_PATH)) {
-      try {
-        const raw = JSON.parse(fs.readFileSync(CONFIG.MERCHANT_KEY_PATH, 'utf-8'));
-        this.merchantKeypair = Keypair.fromSecretKey(new Uint8Array(raw));
-      } catch (e) {
-        this.merchantKeypair = Keypair.generate();
-        fs.writeFileSync(CONFIG.MERCHANT_KEY_PATH, JSON.stringify(Array.from(this.merchantKeypair.secretKey)));
-      }
-    } else {
-      this.merchantKeypair = Keypair.generate();
-      fs.writeFileSync(CONFIG.MERCHANT_KEY_PATH, JSON.stringify(Array.from(this.merchantKeypair.secretKey)));
-    }
+    this.merchantKeypair = this.loadOrCreateKeypair(CONFIG.MERCHANT_KEY_PATH);
+    this.supplierKeypair = this.loadOrCreateKeypair(CONFIG.SUPPLIER_KEY_PATH);
 
-    // Initialize Supplier Keypair
-    if (fs.existsSync(CONFIG.SUPPLIER_KEY_PATH)) {
+    // The app-managed devnet mint authority only exists when we created the mint
+    // ourselves (see ensureDevnetUsdcMint). Circle's devnet USDC has no local authority.
+    if (fs.existsSync(CONFIG.MINT_AUTHORITY_KEY_PATH)) {
       try {
-        const raw = JSON.parse(fs.readFileSync(CONFIG.SUPPLIER_KEY_PATH, 'utf-8'));
-        this.supplierKeypair = Keypair.fromSecretKey(new Uint8Array(raw));
-      } catch (e) {
-        this.supplierKeypair = Keypair.generate();
-        fs.writeFileSync(CONFIG.SUPPLIER_KEY_PATH, JSON.stringify(Array.from(this.supplierKeypair.secretKey)));
+        const raw = JSON.parse(fs.readFileSync(CONFIG.MINT_AUTHORITY_KEY_PATH, 'utf-8'));
+        this.mintAuthorityKeypair = Keypair.fromSecretKey(new Uint8Array(raw));
+      } catch {
+        this.mintAuthorityKeypair = undefined;
       }
-    } else {
-      this.supplierKeypair = Keypair.generate();
-      fs.writeFileSync(CONFIG.SUPPLIER_KEY_PATH, JSON.stringify(Array.from(this.supplierKeypair.secretKey)));
     }
 
     // Update DB with active public keys
@@ -82,6 +101,7 @@ export class SolanaService {
 
     console.log(`[Solana] Merchant Public Key: ${this.merchantKeypair.publicKey.toBase58()}`);
     console.log(`[Solana] Supplier Public Key: ${this.supplierKeypair.publicKey.toBase58()}`);
+    console.log(`[Solana] USDC Mint: ${this.usdcMintPublicKey.toBase58()}`);
   }
 
   public getMerchantPublicKey(): string {
@@ -90,6 +110,46 @@ export class SolanaService {
 
   public getSupplierPublicKey(): string {
     return this.supplierKeypair.publicKey.toBase58();
+  }
+
+  public getUsdcMintAddress(): string {
+    return this.usdcMintPublicKey.toBase58();
+  }
+
+  /**
+   * Reads the mint's decimals and owning token program once, so transfers work
+   * against both Circle's devnet USDC (SPL Token) and Token-2022 mints.
+   */
+  private async getMintInfo(): Promise<{ decimals: number; programId: PublicKey }> {
+    if (this.mintInfoCache) return this.mintInfoCache;
+
+    const accountInfo = await this.connection.getAccountInfo(this.usdcMintPublicKey);
+    if (!accountInfo) {
+      throw new Error(
+        `USDC mint ${this.usdcMintPublicKey.toBase58()} does not exist on ${CONFIG.SOLANA_NETWORK}. ` +
+        `Set USDC_MINT_ADDRESS to a valid mint, or run "npm run mint:devnet" to create an app-managed test mint.`
+      );
+    }
+
+    const programId = accountInfo.owner.equals(TOKEN_2022_PROGRAM_ID)
+      ? TOKEN_2022_PROGRAM_ID
+      : TOKEN_PROGRAM_ID;
+    const mint = await getMint(this.connection, this.usdcMintPublicKey, 'confirmed', programId);
+
+    this.mintInfoCache = { decimals: mint.decimals, programId };
+    return this.mintInfoCache;
+  }
+
+  private async getTokenBalance(owner: PublicKey): Promise<number> {
+    try {
+      const { decimals, programId } = await this.getMintInfo();
+      const ata = getAssociatedTokenAddressSync(this.usdcMintPublicKey, owner, false, programId);
+      const account = await getAccount(this.connection, ata, 'confirmed', programId);
+      return Number(account.amount) / 10 ** decimals;
+    } catch {
+      // No associated token account yet means a zero balance.
+      return 0;
+    }
   }
 
   public async getBalances(merchantId?: string, isLive?: boolean) {
@@ -110,29 +170,22 @@ export class SolanaService {
     }
 
     if (isLive) {
-      // In live mode, fetch the actual on-chain USDC balance of the merchant's wallet
-      try {
-        const usdcMint = new PublicKey(CONFIG.USDC_MINT_ADDRESS);
-        const assocTokenAddr = await getAssociatedTokenAddress(usdcMint, this.merchantKeypair.publicKey);
-        const tokenAccount = await getAccount(this.connection, assocTokenAddr);
-        usdcBalance = Number(tokenAccount.amount) / 1_000_000; // USDC has 6 decimals
-      } catch (err: any) {
-        // If associated token account doesn't exist, it means the balance is 0.00
-        usdcBalance = 0.00;
-      }
+      usdcBalance = await this.getTokenBalance(this.merchantKeypair.publicKey);
     } else {
-      // In sandbox mode, read the sandbox balance from the database
       const merchantDb = merchantId ? await db.getMerchantById(merchantId) : await db.getMerchant();
       usdcBalance = merchantDb ? Number(merchantDb.usdc_balance || 0) : 0.00;
     }
 
     const merchantDb = merchantId ? await db.getMerchantById(merchantId) : await db.getMerchant();
     const ngnBalance = (isLive || !merchantDb) ? 0.00 : Number(merchantDb.ngn_balance || 0);
-    const simulatedSupplierUsdcBalance = 8450.00;
+
+    // Supplier USDC is always read from chain - it is the proof the payout landed.
+    const supplierUsdcBalance = await this.getTokenBalance(this.supplierKeypair.publicKey);
 
     return {
       network: CONFIG.SOLANA_NETWORK,
       rpcUrl: CONFIG.SOLANA_RPC_URL,
+      usdcMint: this.usdcMintPublicKey.toBase58(),
       merchant: {
         publicKey: this.merchantKeypair.publicKey.toBase58(),
         solBalance: Number(solBalance.toFixed(4)),
@@ -142,7 +195,7 @@ export class SolanaService {
       supplier: {
         publicKey: this.supplierKeypair.publicKey.toBase58(),
         solBalance: Number(supplierSolBalance.toFixed(4)),
-        usdcBalance: simulatedSupplierUsdcBalance
+        usdcBalance: supplierUsdcBalance
       }
     };
   }
@@ -173,7 +226,94 @@ export class SolanaService {
   }
 
   /**
-   * Execute real Solana transaction for supplier reorder settlement
+   * Creates an app-managed 6-decimal SPL mint on devnet and persists its authority,
+   * so the settlement flow is testable end-to-end without Circle's captcha faucet.
+   * Returns the new mint address, which must be written to USDC_MINT_ADDRESS.
+   */
+  public async ensureDevnetUsdcMint(): Promise<string> {
+    if (CONFIG.SOLANA_NETWORK === 'mainnet-beta') {
+      throw new Error('Refusing to create a test mint on mainnet-beta.');
+    }
+
+    const authority = this.mintAuthorityKeypair ?? Keypair.generate();
+    const mint = await createMint(
+      this.connection,
+      this.merchantKeypair, // fee payer
+      authority.publicKey,  // mint authority
+      null,                 // no freeze authority
+      6                     // USDC-compatible decimals
+    );
+
+    this.mintAuthorityKeypair = authority;
+    fs.writeFileSync(CONFIG.MINT_AUTHORITY_KEY_PATH, JSON.stringify(Array.from(authority.secretKey)));
+
+    return mint.toBase58();
+  }
+
+  /**
+   * Mints app-managed devnet test USDC into the merchant treasury.
+   * Only works when this app created the mint (see ensureDevnetUsdcMint).
+   */
+  public async mintTestUsdc(amount: number, ownerKeyStr?: string): Promise<string> {
+    if (CONFIG.SOLANA_NETWORK === 'mainnet-beta') {
+      throw new Error('Refusing to mint test tokens on mainnet-beta.');
+    }
+    if (!this.mintAuthorityKeypair) {
+      throw new Error(
+        `No local mint authority for ${this.usdcMintPublicKey.toBase58()}. ` +
+        `This mint (e.g. Circle devnet USDC) must be funded from its own faucet at https://faucet.circle.com.`
+      );
+    }
+
+    const { decimals, programId } = await this.getMintInfo();
+    const owner = ownerKeyStr ? new PublicKey(ownerKeyStr) : this.merchantKeypair.publicKey;
+    const ata = getAssociatedTokenAddressSync(this.usdcMintPublicKey, owner, false, programId);
+
+    // Idempotent ATA creation keeps repeat funding safe.
+    const setupTx = new Transaction().add(
+      createAssociatedTokenAccountIdempotentInstruction(
+        this.merchantKeypair.publicKey,
+        ata,
+        owner,
+        this.usdcMintPublicKey,
+        programId
+      )
+    );
+    await sendAndConfirmTransaction(this.connection, setupTx, [this.merchantKeypair], {
+      commitment: 'confirmed'
+    });
+
+    const signature = await mintTo(
+      this.connection,
+      this.merchantKeypair, // fee payer
+      this.usdcMintPublicKey,
+      ata,
+      this.mintAuthorityKeypair,
+      BigInt(Math.round(amount * 10 ** decimals)),
+      [],
+      { commitment: 'confirmed' },
+      programId
+    );
+
+    db.addLog('USDC_TEST_MINT', 'SUCCESS', `Minted ${amount} devnet test USDC to ${owner.toBase58().substring(0, 8)}...`, {
+      signature,
+      amount,
+      mint: this.usdcMintPublicKey.toBase58()
+    });
+
+    return signature;
+  }
+
+  /**
+   * Executes the supplier payout as a real SPL token transfer of USDC on Solana.
+   *
+   * The transaction contains:
+   *   1. an idempotent create of the supplier's associated token account,
+   *   2. a transferChecked of the USDC amount (mint + decimals verified on-chain),
+   *   3. an SPL Memo carrying the Settle Agent reorder metadata.
+   *
+   * There is no simulated fallback: if the transfer cannot be confirmed on-chain,
+   * this throws and the reorder is marked FAILED.
    */
   public async executeUsdcSettlement(
     reorderId: string,
@@ -181,113 +321,167 @@ export class SolanaService {
     amountNgn: number,
     recipientKeyStr?: string
   ): Promise<SettlementResult> {
+    if (!Number.isFinite(amountUsdc) || amountUsdc <= 0) {
+      throw new Error(`Invalid settlement amount: ${amountUsdc}`);
+    }
+
     const recipientKey = recipientKeyStr ? new PublicKey(recipientKeyStr) : this.supplierKeypair.publicKey;
-    const memoProgramId = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
+    const { decimals, programId } = await this.getMintInfo();
+    const rawAmount = BigInt(Math.round(amountUsdc * 10 ** decimals));
 
-    console.log(`[Solana] Executing Settlement for Reorder #${reorderId}: ${amountUsdc} USDC (≈ ₦${amountNgn.toLocaleString()}) to ${recipientKey.toBase58()}`);
+    const senderAta = getAssociatedTokenAddressSync(
+      this.usdcMintPublicKey, this.merchantKeypair.publicKey, false, programId
+    );
+    const recipientAta = getAssociatedTokenAddressSync(
+      this.usdcMintPublicKey, recipientKey, false, programId
+    );
 
-    try {
-      // 1. Check merchant balance
-      let currentLamports = 0;
+    console.log(
+      `[Solana] Settling Reorder #${reorderId}: ${amountUsdc} USDC (≈ ₦${amountNgn.toLocaleString()}) ` +
+      `-> ${recipientKey.toBase58()} (ATA ${recipientAta.toBase58()})`
+    );
+
+    // 1. The merchant pays network fees and rent for the supplier's token account.
+    const lamports = await this.connection.getBalance(this.merchantKeypair.publicKey);
+    if (lamports < 5_000_000) {
       try {
-        currentLamports = await this.connection.getBalance(this.merchantKeypair.publicKey);
-      } catch (err) {
-        console.warn('[Solana] RPC getBalance skipped:', err);
-      }
-
-      // If zero balance, try a quick airdrop
-      if (currentLamports < 5000) {
-        try {
-          console.log('[Solana] Merchant SOL low. Requesting devnet airdrop...');
-          const airdropSig = await this.connection.requestAirdrop(this.merchantKeypair.publicKey, 0.5 * LAMPORTS_PER_SOL);
-          const latestBh = await this.connection.getLatestBlockhash();
-          await this.connection.confirmTransaction({
-            signature: airdropSig,
-            blockhash: latestBh.blockhash,
-            lastValidBlockHeight: latestBh.lastValidBlockHeight
-          });
-        } catch (airdropErr) {
-          console.log('[Solana] Devnet airdrop skipped or rate limited. Proceeding with on-chain transfer.');
-        }
-      }
-
-      // 2. Build on-chain transaction with Memo instruction containing Settle Agent metadata
-      const memoText = JSON.stringify({
-        agent: 'SettleAgent-v1',
-        action: 'SUPPLIER_PAYOUT',
-        reorder_id: reorderId,
-        usdc_amount: amountUsdc,
-        ngn_payout: amountNgn,
-        corridor: 'NGN_NIGERIA',
-        timestamp: new Date().toISOString()
-      });
-
-      const transaction = new Transaction();
-
-      // Add a 1,000,000 lamport transfer to the supplier as on-chain value carrier (meets rent-exemption minimum)
-      transaction.add(
-        SystemProgram.transfer({
-          fromPubkey: this.merchantKeypair.publicKey,
-          toPubkey: recipientKey,
-          lamports: 1000000 // 0.001 SOL (rent-exempt)
-        })
-      );
-
-      // Add SPL Memo instruction
-      transaction.add(
-        new TransactionInstruction({
-          keys: [{ pubkey: this.merchantKeypair.publicKey, isSigner: true, isWritable: true }],
-          programId: memoProgramId,
-          data: Buffer.from(memoText, 'utf-8')
-        })
-      );
-
-      // Broadcast and confirm on Solana Devnet
-      let signature = '';
-      let isSimulatedFallback = false;
-      try {
-        const latestBlockhash = await this.connection.getLatestBlockhash('confirmed');
-        transaction.recentBlockhash = latestBlockhash.blockhash;
-        transaction.feePayer = this.merchantKeypair.publicKey;
-
-        signature = await sendAndConfirmTransaction(
-          this.connection,
-          transaction,
-          [this.merchantKeypair],
-          { commitment: 'confirmed' }
+        console.log('[Solana] Merchant SOL low. Requesting devnet airdrop...');
+        const airdropSig = await this.connection.requestAirdrop(
+          this.merchantKeypair.publicKey, 1 * LAMPORTS_PER_SOL
         );
-      } catch (txErr: any) {
-        console.warn('[Solana] Live Devnet broadcast error (e.g. rate limit/faucet exhausted):', txErr.message);
-        // Fallback: Generate cryptographic Ed25519 signature of the transfer transaction
-        const dummyKeypair = Keypair.generate();
-        signature = bs58.encode(Buffer.concat([this.merchantKeypair.secretKey.slice(0, 32), dummyKeypair.secretKey.slice(0, 32)]));
-        isSimulatedFallback = true;
+        const latestBh = await this.connection.getLatestBlockhash();
+        await this.connection.confirmTransaction({
+          signature: airdropSig,
+          blockhash: latestBh.blockhash,
+          lastValidBlockHeight: latestBh.lastValidBlockHeight
+        });
+      } catch {
+        console.log('[Solana] Devnet airdrop rate limited; continuing with existing balance.');
       }
+    }
 
-      const explorerUrl = `https://explorer.solana.com/tx/${signature}?cluster=${CONFIG.SOLANA_NETWORK}`;
+    // 2. Verify the merchant actually holds enough USDC before broadcasting.
+    let senderBalance: bigint;
+    try {
+      const senderAccount = await getAccount(this.connection, senderAta, 'confirmed', programId);
+      senderBalance = senderAccount.amount;
+    } catch {
+      throw new Error(
+        `Merchant treasury holds no ${this.usdcMintPublicKey.toBase58()} USDC ` +
+        `(token account ${senderAta.toBase58()} does not exist). Fund it before settling.`
+      );
+    }
 
-      db.addLog('SETTLEMENT_EXECUTED', 'SUCCESS', `USDC Supplier Payout broadcast on Solana for Reorder ${reorderId}`, {
+    if (senderBalance < rawAmount) {
+      throw new Error(
+        `Insufficient USDC: merchant holds ${Number(senderBalance) / 10 ** decimals}, ` +
+        `settlement requires ${amountUsdc}.`
+      );
+    }
+
+    const recipientBalanceBefore = await this.getTokenBalance(recipientKey);
+
+    // 3. Build the transfer.
+    const memoText = JSON.stringify({
+      agent: 'SettleAgent-v1',
+      action: 'SUPPLIER_PAYOUT',
+      reorder_id: reorderId,
+      usdc_amount: amountUsdc,
+      ngn_payout: amountNgn,
+      corridor: 'NGN_NIGERIA',
+      timestamp: new Date().toISOString()
+    });
+
+    const transaction = new Transaction();
+
+    transaction.add(
+      createAssociatedTokenAccountIdempotentInstruction(
+        this.merchantKeypair.publicKey, // payer
+        recipientAta,
+        recipientKey,
+        this.usdcMintPublicKey,
+        programId
+      )
+    );
+
+    transaction.add(
+      createTransferCheckedInstruction(
+        senderAta,
+        this.usdcMintPublicKey,
+        recipientAta,
+        this.merchantKeypair.publicKey,
+        rawAmount,
+        decimals,
+        [],
+        programId
+      )
+    );
+
+    transaction.add(
+      new TransactionInstruction({
+        keys: [{ pubkey: this.merchantKeypair.publicKey, isSigner: true, isWritable: true }],
+        programId: MEMO_PROGRAM_ID,
+        data: Buffer.from(memoText, 'utf-8')
+      })
+    );
+
+    // 4. Broadcast and confirm. A failure here is a real failure.
+    let signature: string;
+    try {
+      signature = await sendAndConfirmTransaction(
+        this.connection,
+        transaction,
+        [this.merchantKeypair],
+        { commitment: 'confirmed' }
+      );
+    } catch (txErr: any) {
+      const logs = txErr?.logs ? `\nProgram logs:\n${txErr.logs.join('\n')}` : '';
+      await db.addLog('SETTLEMENT_FAILED', 'ERROR', `On-chain USDC transfer failed for Reorder ${reorderId}: ${txErr.message}`, {
         reorderId,
         amountUsdc,
-        amountNgn,
-        signature,
-        explorerUrl,
-        isSimulatedFallback
+        error: txErr.message
       });
-
-      return {
-        signature,
-        explorerUrl,
-        amountUsdc,
-        amountNgn,
-        recipientPublicKey: recipientKey.toBase58(),
-        senderPublicKey: this.merchantKeypair.publicKey.toBase58(),
-        isSimulatedFallback
-      };
-    } catch (err: any) {
-      console.error('[Solana] Failed to execute settlement:', err);
-      throw new Error(`Solana Settlement failed: ${err.message}`);
+      throw new Error(`On-chain USDC transfer failed: ${txErr.message}${logs}`);
     }
+
+    // 5. Confirm the supplier actually received the funds.
+    const recipientBalanceAfter = await this.getTokenBalance(recipientKey);
+    const parsedTx = await this.connection.getTransaction(signature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0
+    });
+
+    const explorerUrl = `https://explorer.solana.com/tx/${signature}?cluster=${CONFIG.SOLANA_NETWORK}`;
+
+    await db.addLog('SETTLEMENT_EXECUTED', 'SUCCESS', `${amountUsdc} USDC settled on-chain to supplier for Reorder ${reorderId}`, {
+      reorderId,
+      amountUsdc,
+      amountNgn,
+      signature,
+      explorerUrl,
+      mint: this.usdcMintPublicKey.toBase58(),
+      recipientTokenAccount: recipientAta.toBase58(),
+      recipientBalanceBefore,
+      recipientBalanceAfter
+    });
+
+    console.log(`[Solana] Settled. Supplier USDC ${recipientBalanceBefore} -> ${recipientBalanceAfter}`);
+    console.log(`[Solana] ${explorerUrl}`);
+
+    return {
+      signature,
+      explorerUrl,
+      blockTime: parsedTx?.blockTime ?? undefined,
+      slot: parsedTx?.slot,
+      amountUsdc,
+      amountNgn,
+      recipientPublicKey: recipientKey.toBase58(),
+      senderPublicKey: this.merchantKeypair.publicKey.toBase58(),
+      mintAddress: this.usdcMintPublicKey.toBase58(),
+      recipientTokenAccount: recipientAta.toBase58(),
+      recipientBalanceBefore,
+      recipientBalanceAfter
+    };
   }
 }
 

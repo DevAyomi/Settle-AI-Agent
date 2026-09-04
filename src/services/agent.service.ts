@@ -171,8 +171,7 @@ export class AgentService {
         status: 'COMPLETED',
         solana_tx_signature: settlement.signature,
         solana_explorer_url: settlement.explorerUrl,
-        completed_at: completedAt,
-        error_message: settlement.isSimulatedFallback ? 'SOLANA_FAUCET_RATE_LIMITED' : undefined
+        completed_at: completedAt
       });
 
       // Deduct USDC from merchant's actual database balance
