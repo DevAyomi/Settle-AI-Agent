@@ -114,14 +114,22 @@ The `settle` command prints the signature, explorer URL, slot, mint, both wallet
 
 ### Verified devnet transactions
 
-Confirmed on Solana devnet with mint `B5cmnC5yxQSPpftE3c75rSt3MjrwMaNRJho3kR9qTtXg` (6 decimals):
+**Primary proof — Circle devnet USDC** (`4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`):
 
-* **Merchant:** `6KtEhsDTDcdLN6XuYdW7HynwpD5wTRj9iaYwVSAvrWNu`
-* **Supplier:** `HeXmmUTTbCRmAEhKUELTawoiV4u8smPxpfwDcy8LsBwZ`
+| Field | Value |
+| --- | --- |
+| Transaction | [`5aCbozko…uT3rkLd`](https://explorer.solana.com/tx/5aCbozkoQa2x3Go2tMj49jytQW8bxQrWPFX4Mu14zAtuG7AUQE6GXnj5HFMhRBNyBn9P5tyvJTcfz1XGzuT3rkLd?cluster=devnet) |
+| Status | Success, slot 492944177 |
+| Amount | 15 USDC (≈ ₦22,783.95) |
+| Merchant | `6KtEhsDTDcdLN6XuYdW7HynwpD5wTRj9iaYwVSAvrWNu` — 20 → 5 USDC |
+| Supplier | `HeXmmUTTbCRmAEhKUELTawoiV4u8smPxpfwDcy8LsBwZ` — 0 → 15 USDC |
+| Reorder | `ord_431358_ia5`, approved on the web dashboard |
+
+This is the full product flow end to end: stock depletion → agent scan → reorder proposal → merchant approval → on-chain USDC settlement. The supplier's token account did not exist beforehand, so the transaction shows it being created and funded from zero in the same transaction. The reorder ID is recorded in the on-chain memo.
+
+**Secondary — app-managed test mint** (`B5cmnC5yxQSPpftE3c75rSt3MjrwMaNRJho3kR9qTtXg`), from before the treasury held Circle USDC:
 
 | Settlement | Amount | Supplier USDC | Transaction |
 | --- | --- | --- | --- |
-| CLI proof | 1,250.75 USDC | 0 → 1,250.75 | [`5TARM28r…GojVGf`](https://explorer.solana.com/tx/5TARM28rFUdYr9hw3KaBfYRctE9Wf6do9HLKYpWXiego5GoB2FLSuUVvUkK14JNjHNGGdY2ojdwAsviPizGojVGf?cluster=devnet) |
-| Reorder `ord_402238_nc7`, approved via dashboard | 250 USDC | 1,250.75 → 1,500.75 | [`4PZyEXBb…EPMkZ`](https://explorer.solana.com/tx/4PZyEXBbsaFcLtfzpQZNuicDagcyNefZueF5jcKeMZs6SqXdtPSjfro4gjxGVdz8N6BNKvo1pZWWzwLnXE4EPMkZ?cluster=devnet) |
-
-The second transaction is the full product flow end to end: stock depletion → agent scan → reorder proposal → merchant approval → on-chain USDC settlement, with the reorder ID recorded in the transaction memo.
+| CLI proof | 1,250.75 | 0 → 1,250.75 | [`5TARM28r…GojVGf`](https://explorer.solana.com/tx/5TARM28rFUdYr9hw3KaBfYRctE9Wf6do9HLKYpWXiego5GoB2FLSuUVvUkK14JNjHNGGdY2ojdwAsviPizGojVGf?cluster=devnet) |
+| Reorder `ord_402238_nc7` via dashboard | 250 | 1,250.75 → 1,500.75 | [`4PZyEXBb…EPMkZ`](https://explorer.solana.com/tx/4PZyEXBbsaFcLtfzpQZNuicDagcyNefZueF5jcKeMZs6SqXdtPSjfro4gjxGVdz8N6BNKvo1pZWWzwLnXE4EPMkZ?cluster=devnet) |
